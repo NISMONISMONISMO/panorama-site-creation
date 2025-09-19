@@ -10,7 +10,6 @@ import TourBuilder from '@/components/TourBuilder';
 import AuthModal from '@/components/AuthModal';
 import UserProfile from '@/components/UserProfile';
 import AdminPanel from '@/components/AdminPanel';
-import PanoramaViewer from '@/components/PanoramaViewer';
 
 interface PanoramaCategory {
   id: string;
