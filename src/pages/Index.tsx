@@ -5,6 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import PanoramaViewer from '@/components/PanoramaViewer';
+import TourBuilder from '@/components/TourBuilder';
+import AuthModal from '@/components/AuthModal';
+import UserProfile from '@/components/UserProfile';
+import AdminPanel from '@/components/AdminPanel';
+import PanoramaViewer from '@/components/PanoramaViewer';
 
 interface PanoramaCategory {
   id: string;
@@ -92,11 +98,34 @@ const subscriptionPlans = [
 ];
 
 function Index() {
-  const [currentView, setCurrentView] = useState<'home' | 'catalog' | 'pricing'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'catalog' | 'pricing' | 'tour-builder' | 'profile' | 'admin'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [heroImageIndex, setHeroImageIndex] = useState(0);
+  const [selectedPanorama, setSelectedPanorama] = useState<PanoramaItem | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+
+  const handleAuth = (userData: any) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    setCurrentView('home');
+  };
+
+  const handlePanoramaClick = (panorama: PanoramaItem) => {
+    if (!isAuthenticated && panorama.premium) {
+      setShowAuth(true);
+      return;
+    }
+    setSelectedPanorama(panorama);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -142,16 +171,68 @@ function Index() {
             >
               Pricing
             </button>
+            {isAuthenticated && (
+              <button 
+                onClick={() => setCurrentView('tour-builder')}
+                className={`transition-colors ${currentView === 'tour-builder' ? 'text-neon-cyan' : 'text-white hover:text-neon-cyan'}`}
+              >
+                Create Tour
+              </button>
+            )}
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="outline" className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black">
-              <Icon name="Upload" size={16} className="mr-2" />
-              Upload
-            </Button>
-            <Button className="bg-gradient-to-r from-neon-cyan to-neon-blue text-black font-semibold">
-              Sign In
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black"
+                  disabled={user?.subscription === 'free' && user?.uploads >= user?.maxUploads}
+                >
+                  <Icon name="Upload" size={16} className="mr-2" />
+                  Upload {user?.subscription === 'free' && `(${user?.uploads}/${user?.maxUploads})`}
+                </Button>
+                <Button 
+                  onClick={() => setCurrentView('profile')}
+                  variant="outline"
+                  className="neon-border text-white border-white/30"
+                >
+                  <img 
+                    src={user?.avatar} 
+                    alt={user?.name} 
+                    className="w-6 h-6 rounded-full mr-2" 
+                  />
+                  {user?.name}
+                </Button>
+                {user?.role === 'admin' && (
+                  <Button 
+                    onClick={() => setCurrentView('admin')}
+                    variant="outline"
+                    className="neon-border text-neon-magenta border-neon-magenta"
+                  >
+                    <Icon name="Settings" size={16} className="mr-2" />
+                    Admin
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black"
+                  onClick={() => setShowAuth(true)}
+                >
+                  <Icon name="Upload" size={16} className="mr-2" />
+                  Upload
+                </Button>
+                <Button 
+                  className="bg-gradient-to-r from-neon-cyan to-neon-blue text-black font-semibold"
+                  onClick={() => setShowAuth(true)}
+                >
+                  Sign In
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -193,6 +274,13 @@ function Index() {
               size="lg" 
               variant="outline" 
               className="neon-border text-neon-magenta border-neon-magenta hover:bg-neon-magenta hover:text-black text-lg px-8 py-4"
+              onClick={() => {
+                if (isAuthenticated) {
+                  setCurrentView('tour-builder');
+                } else {
+                  setShowAuth(true);
+                }
+              }}
             >
               <Icon name="Zap" size={20} className="mr-2" />
               Create Tour
@@ -325,7 +413,11 @@ function Index() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPanoramas.map((panorama) => (
-            <Card key={panorama.id} className="glass-effect border-white/20 hover:border-neon-cyan/50 transition-all group">
+            <Card 
+              key={panorama.id} 
+              className="glass-effect border-white/20 hover:border-neon-cyan/50 transition-all group cursor-pointer"
+              onClick={() => handlePanoramaClick(panorama)}
+            >
               <div className="relative overflow-hidden rounded-t-lg">
                 <img 
                   src={panorama.image} 
@@ -335,6 +427,11 @@ function Index() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 {panorama.premium && (
                   <Badge className="absolute top-4 right-4 bg-neon-magenta text-white">Premium</Badge>
+                )}
+                {!isAuthenticated && panorama.premium && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <Icon name="Lock" className="text-white" size={32} />
+                  </div>
                 )}
                 <div className="absolute bottom-4 left-4 flex items-center space-x-4 text-white text-sm">
                   <span className="flex items-center">
@@ -438,6 +535,44 @@ function Index() {
       
       {currentView === 'catalog' && renderCatalogView()}
       {currentView === 'pricing' && renderPricingView()}
+      
+      {currentView === 'tour-builder' && isAuthenticated && (
+        <TourBuilder onClose={() => setCurrentView('home')} />
+      )}
+      
+      {currentView === 'profile' && isAuthenticated && (
+        <UserProfile 
+          user={user}
+          onClose={() => setCurrentView('home')}
+          onLogout={handleLogout}
+          onUpgrade={() => setCurrentView('pricing')}
+        />
+      )}
+      
+      {currentView === 'admin' && user?.role === 'admin' && (
+        <AdminPanel onClose={() => setCurrentView('home')} />
+      )}
+      
+      {selectedPanorama && (
+        <PanoramaViewer
+          imageUrl={selectedPanorama.image}
+          title={selectedPanorama.title}
+          author={selectedPanorama.author}
+          views={selectedPanorama.views}
+          likes={selectedPanorama.likes}
+          premium={selectedPanorama.premium}
+          onClose={() => setSelectedPanorama(null)}
+          onLike={() => console.log('Like clicked')}
+          onShare={() => console.log('Share clicked')}
+          onEmbed={isAuthenticated && user?.subscription !== 'free' ? () => console.log('Embed clicked') : undefined}
+        />
+      )}
+      
+      <AuthModal 
+        isOpen={showAuth}
+        onClose={() => setShowAuth(false)}
+        onAuth={handleAuth}
+      />
     </div>
   );
 }
