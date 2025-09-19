@@ -2,6 +2,8 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import * as THREE from 'three';
 
@@ -9,9 +11,17 @@ interface Hotspot {
   id: string;
   x: number;
   y: number;
+  z: number;
   targetPanorama: string;
   title: string;
   description?: string;
+}
+
+interface Panorama {
+  id: string;
+  title: string;
+  imageUrl: string;
+  hotspots: Hotspot[];
 }
 
 interface PanoramaViewerProps {
@@ -26,6 +36,14 @@ interface PanoramaViewerProps {
   onShare?: () => void;
   onEmbed?: () => void;
   premium?: boolean;
+  // Новые пропсы для туров
+  isTour?: boolean;
+  currentPanoramaId?: string;
+  availablePanoramas?: Panorama[];
+  isEditMode?: boolean;
+  onHotspotAdd?: (hotspot: Omit<Hotspot, 'id'>) => void;
+  onHotspotDelete?: (hotspotId: string) => void;
+  onPanoramaChange?: (panoramaId: string) => void;
 }
 
 export default function PanoramaViewer({
@@ -39,13 +57,22 @@ export default function PanoramaViewer({
   onLike,
   onShare,
   onEmbed,
-  premium = false
+  premium = false,
+  isTour = false,
+  currentPanoramaId,
+  availablePanoramas = [],
+  isEditMode = false,
+  onHotspotAdd,
+  onHotspotDelete,
+  onPanoramaChange
 }: PanoramaViewerProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const sphereRef = useRef<THREE.Mesh | null>(null);
+  const raycasterRef = useRef<THREE.Raycaster | null>(null);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -54,10 +81,121 @@ export default function PanoramaViewer({
     { id: '2', author: 'TechVisionary', text: 'Perfect for my virtual office tour project.', time: '5 hours ago' }
   ]);
   const [newComment, setNewComment] = useState('');
+  
+  // Состояние для создания hotspot'ов
+  const [isCreatingHotspot, setIsCreatingHotspot] = useState(false);
+  const [newHotspotData, setNewHotspotData] = useState<{
+    x: number;
+    y: number;
+    z: number;
+    title: string;
+    targetPanorama: string;
+  } | null>(null);
 
   // Mouse interaction
   const mouseRef = useRef({ x: 0, y: 0 });
   const isMouseDownRef = useRef(false);
+  const hotspotMeshesRef = useRef<THREE.Mesh[]>([]);
+
+  const createHotspotMesh = useCallback((hotspot: Hotspot) => {
+    const geometry = new THREE.SphereGeometry(8, 16, 16);
+    const material = new THREE.MeshBasicMaterial({ 
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.8
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    
+    // Позиционируем hotspot на поверхности сферы
+    const distance = 480; // Чуть ближе к камере чем сфера панорамы (500)
+    mesh.position.set(hotspot.x * distance, hotspot.y * distance, hotspot.z * distance);
+    mesh.userData = { hotspot };
+    
+    return mesh;
+  }, []);
+
+  const updateHotspots = useCallback(() => {
+    if (!sceneRef.current) return;
+    
+    // Удаляем старые hotspot'ы
+    hotspotMeshesRef.current.forEach(mesh => {
+      sceneRef.current?.remove(mesh);
+    });
+    hotspotMeshesRef.current = [];
+    
+    // Добавляем новые hotspot'ы
+    hotspots.forEach(hotspot => {
+      const mesh = createHotspotMesh(hotspot);
+      sceneRef.current?.add(mesh);
+      hotspotMeshesRef.current.push(mesh);
+    });
+  }, [hotspots, createHotspotMesh]);
+
+  const handleCanvasClick = useCallback((event: MouseEvent) => {
+    if (!isEditMode || !cameraRef.current || !sphereRef.current || isDragging) return;
+    if (hotspots.length >= 4) {
+      alert('Максимум 4 hotspot\'а на панораму');
+      return;
+    }
+
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    const mouse = new THREE.Vector2();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, cameraRef.current);
+    
+    const intersects = raycaster.intersectObject(sphereRef.current);
+    if (intersects.length > 0) {
+      const point = intersects[0].point;
+      const normalizedPoint = point.normalize();
+      
+      setNewHotspotData({
+        x: normalizedPoint.x,
+        y: normalizedPoint.y,
+        z: normalizedPoint.z,
+        title: '',
+        targetPanorama: availablePanoramas.length > 0 ? availablePanoramas[0].id : ''
+      });
+      setIsCreatingHotspot(true);
+    }
+  }, [isEditMode, isDragging, hotspots.length, availablePanoramas]);
+
+  const handleHotspotClick = useCallback((event: MouseEvent) => {
+    if (isEditMode || !cameraRef.current) return;
+
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    const mouse = new THREE.Vector2();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, cameraRef.current);
+    
+    const intersects = raycaster.intersectObjects(hotspotMeshesRef.current);
+    if (intersects.length > 0 && onPanoramaChange) {
+      const hotspot = intersects[0].object.userData.hotspot as Hotspot;
+      onPanoramaChange(hotspot.targetPanorama);
+    }
+  }, [isEditMode, onPanoramaChange]);
+
+  const saveHotspot = () => {
+    if (!newHotspotData || !onHotspotAdd) return;
+    
+    onHotspotAdd({
+      ...newHotspotData,
+      description: ''
+    });
+    
+    setNewHotspotData(null);
+    setIsCreatingHotspot(false);
+  };
+
+  const cancelHotspot = () => {
+    setNewHotspotData(null);
+    setIsCreatingHotspot(false);
+  };
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -66,6 +204,7 @@ export default function PanoramaViewer({
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const raycaster = new THREE.Raycaster();
     
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     renderer.setClearColor(0x000000);
@@ -103,15 +242,18 @@ export default function PanoramaViewer({
     rendererRef.current = renderer;
     cameraRef.current = camera;
     sphereRef.current = sphere;
+    raycasterRef.current = raycaster;
 
     // Mouse controls
     let phi = 0;
     let theta = 0;
+    let mouseDownTime = 0;
 
     const onMouseDown = (event: MouseEvent) => {
       isMouseDownRef.current = true;
       mouseRef.current.x = event.clientX;
       mouseRef.current.y = event.clientY;
+      mouseDownTime = Date.now();
       setIsDragging(true);
       setShowControls(false);
     };
@@ -140,10 +282,21 @@ export default function PanoramaViewer({
       mouseRef.current.y = event.clientY;
     };
 
-    const onMouseUp = () => {
+    const onMouseUp = (event: MouseEvent) => {
+      const clickDuration = Date.now() - mouseDownTime;
+      
       isMouseDownRef.current = false;
       setIsDragging(false);
       setTimeout(() => setShowControls(true), 1000);
+      
+      // Если это был клик (короткое время), а не drag
+      if (clickDuration < 200) {
+        if (isEditMode) {
+          handleCanvasClick(event);
+        } else if (isTour) {
+          handleHotspotClick(event);
+        }
+      }
     };
 
     const onWheel = (event: WheelEvent) => {
@@ -159,6 +312,7 @@ export default function PanoramaViewer({
         isMouseDownRef.current = true;
         mouseRef.current.x = event.touches[0].clientX;
         mouseRef.current.y = event.touches[0].clientY;
+        mouseDownTime = Date.now();
         setIsDragging(true);
         setShowControls(false);
       }
@@ -187,10 +341,28 @@ export default function PanoramaViewer({
       mouseRef.current.y = event.touches[0].clientY;
     };
 
-    const onTouchEnd = () => {
+    const onTouchEnd = (event: TouchEvent) => {
+      const clickDuration = Date.now() - mouseDownTime;
+      
       isMouseDownRef.current = false;
       setIsDragging(false);
       setTimeout(() => setShowControls(true), 1000);
+      
+      // Touch click handling
+      if (clickDuration < 200 && event.changedTouches.length > 0) {
+        const touch = event.changedTouches[0];
+        const mockEvent = {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          target: event.target
+        } as MouseEvent;
+        
+        if (isEditMode) {
+          handleCanvasClick(mockEvent);
+        } else if (isTour) {
+          handleHotspotClick(mockEvent);
+        }
+      }
     };
 
     // Add event listeners
@@ -241,7 +413,12 @@ export default function PanoramaViewer({
       }
       renderer.dispose();
     };
-  }, [imageUrl]);
+  }, [imageUrl, isEditMode, isTour, handleCanvasClick, handleHotspotClick]);
+
+  // Update hotspots when they change
+  useEffect(() => {
+    updateHotspots();
+  }, [hotspots, updateHotspots]);
 
   const resetView = () => {
     if (cameraRef.current) {
@@ -281,6 +458,23 @@ export default function PanoramaViewer({
           </div>
         )}
 
+        {/* Edit Mode Instructions */}
+        {isEditMode && (
+          <div className="absolute top-20 left-4 glass-effect px-4 py-2 rounded-lg">
+            <p className="text-neon-cyan font-semibold">🔧 Режим редактирования</p>
+            <p className="text-sm text-gray-300">Кликните на панораму чтобы добавить hotspot</p>
+            <p className="text-xs text-gray-400">Максимум 4 hotspot'а на панораму ({hotspots.length}/4)</p>
+          </div>
+        )}
+
+        {/* Tour Mode Instructions */}
+        {isTour && !isEditMode && (
+          <div className="absolute top-20 left-4 glass-effect px-4 py-2 rounded-lg">
+            <p className="text-neon-green font-semibold">🎯 Режим тура</p>
+            <p className="text-sm text-gray-300">Кликните на светящиеся точки для перехода</p>
+          </div>
+        )}
+
         {/* Top Controls */}
         <div className={`absolute top-4 left-4 right-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
           <div className="flex items-center justify-between">
@@ -300,6 +494,9 @@ export default function PanoramaViewer({
               </div>
               {premium && (
                 <Badge className="bg-neon-magenta text-white">Premium</Badge>
+              )}
+              {isTour && (
+                <Badge className="bg-neon-green text-white">Тур</Badge>
               )}
             </div>
 
@@ -361,6 +558,99 @@ export default function PanoramaViewer({
 
       {/* Side Panel */}
       <div className="w-80 bg-dark-200 border-l border-white/20 flex flex-col">
+        {/* Hotspot Creation Modal */}
+        {isCreatingHotspot && newHotspotData && (
+          <div className="p-4 border-b border-white/20 bg-dark-300">
+            <h4 className="text-white font-orbitron font-bold mb-4">Создать Hotspot</h4>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="text-gray-300 text-sm block mb-1">Название (необязательно)</label>
+                <Input
+                  value={newHotspotData.title}
+                  onChange={(e) => setNewHotspotData(prev => prev ? {...prev, title: e.target.value} : null)}
+                  placeholder="Название hotspot'а..."
+                  className="bg-dark-200 border-white/20 text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="text-gray-300 text-sm block mb-1">Переход к панораме</label>
+                <Select
+                  value={newHotspotData.targetPanorama}
+                  onValueChange={(value) => setNewHotspotData(prev => prev ? {...prev, targetPanorama: value} : null)}
+                >
+                  <SelectTrigger className="bg-dark-200 border-white/20 text-white">
+                    <SelectValue placeholder="Выберите панораму" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availablePanoramas.map(panorama => (
+                      <SelectItem key={panorama.id} value={panorama.id}>
+                        {panorama.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button
+                  onClick={saveHotspot}
+                  className="flex-1 bg-neon-green text-black hover:bg-neon-green/80"
+                  disabled={!newHotspotData.targetPanorama}
+                >
+                  <Icon name="Check" size={14} className="mr-2" />
+                  Создать
+                </Button>
+                <Button
+                  onClick={cancelHotspot}
+                  variant="outline"
+                  className="flex-1 border-white/30 text-white hover:bg-white/10"
+                >
+                  <Icon name="X" size={14} className="mr-2" />
+                  Отмена
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hotspots List */}
+        {isTour && hotspots.length > 0 && (
+          <div className="p-4 border-b border-white/20">
+            <h4 className="text-white font-orbitron font-bold mb-4">
+              Hotspots ({hotspots.length}/4)
+            </h4>
+            <div className="space-y-2">
+              {hotspots.map((hotspot, index) => {
+                const targetPanorama = availablePanoramas.find(p => p.id === hotspot.targetPanorama);
+                return (
+                  <div key={hotspot.id} className="glass-effect p-3 rounded-lg flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-neon-cyan font-semibold text-sm">
+                        {hotspot.title || `Hotspot ${index + 1}`}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        → {targetPanorama?.title || 'Неизвестная панорама'}
+                      </p>
+                    </div>
+                    {isEditMode && onHotspotDelete && (
+                      <Button
+                        onClick={() => onHotspotDelete(hotspot.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-400 hover:text-red-300 p-1"
+                      >
+                        <Icon name="Trash2" size={14} />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Stats */}
         <div className="p-4 border-b border-white/20">
           <div className="flex items-center justify-between mb-2">

@@ -6,15 +6,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import PanoramaViewer from './PanoramaViewer';
 
 interface Hotspot {
   id: string;
   x: number;
   y: number;
+  z: number;
   targetPanorama: string;
   title: string;
-  description: string;
-  icon: string;
+  description?: string;
 }
 
 interface TourScene {
@@ -33,9 +34,9 @@ interface Tour {
 }
 
 const samplePanoramas = [
-  { id: '1', title: 'Neo Tokyo Night', image: '/img/b6175d7f-3820-410f-89f7-d4fe91bf69de.jpg' },
-  { id: '2', title: 'Neon Peaks', image: '/img/542cbe70-12c6-4b52-aad4-c60f92d854a0.jpg' },
-  { id: '3', title: 'Digital Ocean', image: '/img/a0134b33-244e-4ca5-8bd5-41b083ed220e.jpg' }
+  { id: '1', title: 'Winter Mountain Vista', image: 'https://cdn.poehali.dev/files/cef47976-87e8-4184-856f-14af054679bb.png' },
+  { id: '2', title: 'Forest Path', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=2048&h=1024&fit=crop' },
+  { id: '3', title: 'Lake View', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2048&h=1024&fit=crop' }
 ];
 
 export default function TourBuilder({ onClose }: { onClose: () => void }) {
@@ -56,6 +57,8 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
     icon: 'Navigation'
   });
   const [previewMode, setPreviewMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showViewer, setShowViewer] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const addScene = (panoramaId: string) => {
@@ -102,10 +105,10 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
         id: `hotspot-${Date.now()}`,
         x,
         y,
+        z: 0,
         targetPanorama: hotspotForm.targetPanorama,
         title: hotspotForm.title,
-        description: hotspotForm.description,
-        icon: hotspotForm.icon
+        description: hotspotForm.description
       };
 
       setCurrentTour(prev => ({
@@ -120,6 +123,47 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
       setHotspotForm({ title: '', description: '', targetPanorama: '', icon: 'Navigation' });
       setIsAddingHotspot(false);
     }
+  };
+
+  const addHotspot = (hotspot: Omit<Hotspot, 'id'>) => {
+    if (!selectedScene) return;
+    
+    const newHotspot: Hotspot = {
+      ...hotspot,
+      id: `hotspot-${Date.now()}`
+    };
+    
+    setCurrentTour(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(scene =>
+        scene.id === selectedScene
+          ? { ...scene, hotspots: [...scene.hotspots, newHotspot] }
+          : scene
+      )
+    }));
+  };
+
+  const deleteHotspot = (hotspotId: string) => {
+    if (!selectedScene) return;
+    
+    setCurrentTour(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(scene =>
+        scene.id === selectedScene
+          ? { ...scene, hotspots: scene.hotspots.filter(h => h.id !== hotspotId) }
+          : scene
+      )
+    }));
+  };
+
+  const handlePanoramaChange = (sceneId: string) => {
+    setSelectedScene(sceneId);
+  };
+
+  const openViewer = (editMode = false) => {
+    if (!selectedScene) return;
+    setIsEditMode(editMode);
+    setShowViewer(true);
   };
 
   const removeHotspot = (sceneId: string, hotspotId: string) => {
@@ -266,31 +310,37 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
         <div className="p-4 border-b border-white/20 bg-dark-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              {selectedScene && (
+                <>
+                  <Button
+                    onClick={() => openViewer(false)}
+                    className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black"
+                  >
+                    <Icon name="Play" size={16} className="mr-2" />
+                    Просмотр 360°
+                  </Button>
+                  
+                  <Button
+                    onClick={() => openViewer(true)}
+                    className="bg-neon-magenta text-white hover:bg-neon-magenta/80"
+                  >
+                    <Icon name="Edit" size={16} className="mr-2" />
+                    Редактировать Hotspots
+                  </Button>
+                </>
+              )}
+              
               <Button
                 variant={previewMode ? 'default' : 'outline'}
                 onClick={() => setPreviewMode(!previewMode)}
                 className={previewMode 
                   ? 'bg-neon-cyan text-black' 
-                  : 'neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black'
+                  : 'neon-border text-white border-white/30 hover:bg-white/10'
                 }
               >
-                <Icon name={previewMode ? 'Edit' : 'Play'} size={16} className="mr-2" />
-                {previewMode ? 'Edit Mode' : 'Preview'}
+                <Icon name={previewMode ? 'Edit' : 'Eye'} size={16} className="mr-2" />
+                {previewMode ? 'Старый редактор' : 'Старый просмотр'}
               </Button>
-
-              {selectedScene && !previewMode && (
-                <Button
-                  variant={isAddingHotspot ? 'default' : 'outline'}
-                  onClick={() => setIsAddingHotspot(!isAddingHotspot)}
-                  className={isAddingHotspot 
-                    ? 'bg-neon-magenta text-white' 
-                    : 'neon-border text-neon-magenta border-neon-magenta hover:bg-neon-magenta hover:text-black'
-                  }
-                >
-                  <Icon name="Plus" size={16} className="mr-2" />
-                  Add Hotspot
-                </Button>
-              )}
             </div>
 
             <div className="flex items-center space-x-2">
@@ -393,6 +443,34 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
+
+      {/* 360° Panorama Viewer */}
+      {showViewer && selectedScene && currentScene && (
+        <PanoramaViewer
+          imageUrl={currentScene.image}
+          title={currentScene.title}
+          author="Конструктор туров"
+          views={0}
+          likes={0}
+          hotspots={currentScene.hotspots}
+          onClose={() => {
+            setShowViewer(false);
+            setIsEditMode(false);
+          }}
+          isTour={true}
+          currentPanoramaId={selectedScene}
+          availablePanoramas={currentTour.scenes.map(scene => ({
+            id: scene.id,
+            title: scene.title,
+            imageUrl: scene.image,
+            hotspots: scene.hotspots
+          }))}
+          isEditMode={isEditMode}
+          onHotspotAdd={addHotspot}
+          onHotspotDelete={deleteHotspot}
+          onPanoramaChange={handlePanoramaChange}
+        />
+      )}
     </div>
   );
 }
