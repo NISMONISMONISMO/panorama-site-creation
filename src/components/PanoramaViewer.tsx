@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import * as THREE from 'three';
 
 interface Hotspot {
   id: string;
@@ -40,99 +41,212 @@ export default function PanoramaViewer({
   onEmbed,
   premium = false
 }: PanoramaViewerProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [lastMouse, setLastMouse] = useState({ x: 0, y: 0 });
+  const mountRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const sphereRef = useRef<THREE.Mesh | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(true);
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [comments, setComments] = useState([
     { id: '1', author: 'VR_Explorer', text: 'Amazing view! The detail is incredible.', time: '2 hours ago' },
     { id: '2', author: 'TechVisionary', text: 'Perfect for my virtual office tour project.', time: '5 hours ago' }
   ]);
   const [newComment, setNewComment] = useState('');
 
+  // Mouse interaction
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const isMouseDownRef = useRef(false);
+
   useEffect(() => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      setImage(img);
-      drawPanorama();
+    if (!mountRef.current) return;
+
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    
+    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+    renderer.setClearColor(0x000000);
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Create sphere for panorama
+    const geometry = new THREE.SphereGeometry(500, 60, 40);
+    const material = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
+
+    // Load texture
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      imageUrl,
+      (texture) => {
+        material.map = texture;
+        material.needsUpdate = true;
+        setIsLoading(false);
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading panorama:', error);
+        setIsLoading(false);
+      }
+    );
+
+    const sphere = new THREE.Mesh(geometry, material);
+    scene.add(sphere);
+
+    // Set initial camera position
+    camera.position.set(0, 0, 0);
+    camera.lookAt(1, 0, 0);
+
+    // Store refs
+    sceneRef.current = scene;
+    rendererRef.current = renderer;
+    cameraRef.current = camera;
+    sphereRef.current = sphere;
+
+    // Mouse controls
+    let phi = 0;
+    let theta = 0;
+
+    const onMouseDown = (event: MouseEvent) => {
+      isMouseDownRef.current = true;
+      mouseRef.current.x = event.clientX;
+      mouseRef.current.y = event.clientY;
+      setIsDragging(true);
+      setShowControls(false);
     };
-    img.src = imageUrl;
+
+    const onMouseMove = (event: MouseEvent) => {
+      if (!isMouseDownRef.current) return;
+
+      const deltaX = event.clientX - mouseRef.current.x;
+      const deltaY = event.clientY - mouseRef.current.y;
+
+      phi += deltaX * 0.005;
+      theta -= deltaY * 0.005;
+      
+      // Limit vertical rotation
+      theta = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, theta));
+
+      // Update camera position
+      const x = Math.cos(phi) * Math.cos(theta);
+      const y = Math.sin(theta);
+      const z = Math.sin(phi) * Math.cos(theta);
+      
+      camera.lookAt(x, y, z);
+
+      mouseRef.current.x = event.clientX;
+      mouseRef.current.y = event.clientY;
+    };
+
+    const onMouseUp = () => {
+      isMouseDownRef.current = false;
+      setIsDragging(false);
+      setTimeout(() => setShowControls(true), 1000);
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const fov = camera.fov + event.deltaY * 0.05;
+      camera.fov = Math.max(10, Math.min(120, fov));
+      camera.updateProjectionMatrix();
+    };
+
+    // Touch controls for mobile
+    const onTouchStart = (event: TouchEvent) => {
+      if (event.touches.length === 1) {
+        isMouseDownRef.current = true;
+        mouseRef.current.x = event.touches[0].clientX;
+        mouseRef.current.y = event.touches[0].clientY;
+        setIsDragging(true);
+        setShowControls(false);
+      }
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (!isMouseDownRef.current || event.touches.length !== 1) return;
+      event.preventDefault();
+
+      const deltaX = event.touches[0].clientX - mouseRef.current.x;
+      const deltaY = event.touches[0].clientY - mouseRef.current.y;
+
+      phi += deltaX * 0.005;
+      theta -= deltaY * 0.005;
+      
+      theta = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, theta));
+
+      const x = Math.cos(phi) * Math.cos(theta);
+      const y = Math.sin(theta);
+      const z = Math.sin(phi) * Math.cos(theta);
+      
+      camera.lookAt(x, y, z);
+
+      mouseRef.current.x = event.touches[0].clientX;
+      mouseRef.current.y = event.touches[0].clientY;
+    };
+
+    const onTouchEnd = () => {
+      isMouseDownRef.current = false;
+      setIsDragging(false);
+      setTimeout(() => setShowControls(true), 1000);
+    };
+
+    // Add event listeners
+    renderer.domElement.addEventListener('mousedown', onMouseDown);
+    renderer.domElement.addEventListener('mousemove', onMouseMove);
+    renderer.domElement.addEventListener('mouseup', onMouseUp);
+    renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
+    renderer.domElement.addEventListener('touchstart', onTouchStart, { passive: false });
+    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: false });
+    renderer.domElement.addEventListener('touchend', onTouchEnd);
+
+    // Handle resize
+    const handleResize = () => {
+      if (!mountRef.current || !camera || !renderer) return;
+      
+      const width = mountRef.current.clientWidth;
+      const height = mountRef.current.clientHeight;
+      
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Animation loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
+    };
+    animate();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      renderer.domElement.removeEventListener('mousedown', onMouseDown);
+      renderer.domElement.removeEventListener('mousemove', onMouseMove);
+      renderer.domElement.removeEventListener('mouseup', onMouseUp);
+      renderer.domElement.removeEventListener('wheel', onWheel);
+      renderer.domElement.removeEventListener('touchstart', onTouchStart);
+      renderer.domElement.removeEventListener('touchmove', onTouchMove);
+      renderer.domElement.removeEventListener('touchend', onTouchEnd);
+      
+      if (mountRef.current && renderer.domElement) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
   }, [imageUrl]);
 
-  useEffect(() => {
-    if (image) {
-      drawPanorama();
-    }
-  }, [rotation, zoom, image]);
-
-  const drawPanorama = useCallback(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx || !image) return;
-
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    
-    ctx.save();
-    ctx.translate(canvasWidth / 2, canvasHeight / 2);
-    ctx.scale(zoom, zoom);
-    ctx.rotate((rotation.y * Math.PI) / 180);
-    
-    const imageWidth = image.width * 0.5;
-    const imageHeight = image.height * 0.5;
-    
-    ctx.drawImage(
-      image,
-      -imageWidth / 2,
-      -imageHeight / 2,
-      imageWidth,
-      imageHeight
-    );
-    
-    ctx.restore();
-  }, [image, rotation, zoom]);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
-    setLastMouse({ x: e.clientX, y: e.clientY });
-    setShowControls(false);
-  }, []);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging) return;
-
-    const deltaX = e.clientX - lastMouse.x;
-    const deltaY = e.clientY - lastMouse.y;
-
-    setRotation(prev => ({
-      x: Math.max(-90, Math.min(90, prev.x + deltaY * 0.5)),
-      y: prev.y + deltaX * 0.5
-    }));
-
-    setLastMouse({ x: e.clientX, y: e.clientY });
-  }, [isDragging, lastMouse]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    setShowControls(true);
-  }, []);
-
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
-    setZoom(prev => Math.max(0.5, Math.min(3, prev * zoomDelta)));
-  }, []);
-
   const resetView = () => {
-    setRotation({ x: 0, y: 0 });
-    setZoom(1);
+    if (cameraRef.current) {
+      cameraRef.current.fov = 75;
+      cameraRef.current.updateProjectionMatrix();
+      cameraRef.current.lookAt(1, 0, 0);
+    }
   };
 
   const handleCommentSubmit = (e: React.FormEvent) => {
@@ -149,56 +263,24 @@ export default function PanoramaViewer({
     }
   };
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const resizeCanvas = () => {
-      const container = containerRef.current;
-      if (!container) return;
-      
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-      drawPanorama();
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-    return () => window.removeEventListener('resize', resizeCanvas);
-  }, [drawPanorama]);
-
   return (
     <div className="fixed inset-0 z-50 bg-black flex">
       {/* Main Viewer */}
-      <div className="flex-1 relative" ref={containerRef}>
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full cursor-grab active:cursor-grabbing"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onWheel={handleWheel}
-        />
+      <div className="flex-1 relative">
+        <div ref={mountRef} className="w-full h-full" />
 
-        {/* Hotspots */}
-        {hotspots.map((hotspot) => (
-          <div
-            key={hotspot.id}
-            className="absolute w-8 h-8 bg-neon-cyan rounded-full animate-pulse cursor-pointer flex items-center justify-center"
-            style={{
-              left: `${hotspot.x}%`,
-              top: `${hotspot.y}%`,
-              transform: 'translate(-50%, -50%)'
-            }}
-            title={hotspot.title}
-          >
-            <Icon name="Navigation" size={16} className="text-black" />
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <div className="text-white text-center">
+              <div className="animate-spin w-12 h-12 border-4 border-neon-cyan border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p>Loading panorama...</p>
+            </div>
           </div>
-        ))}
+        )}
 
         {/* Top Controls */}
-        <div className={`absolute top-4 left-4 right-4 transition-opacity ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute top-4 left-4 right-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -262,35 +344,10 @@ export default function PanoramaViewer({
           </div>
         </div>
 
-        {/* Zoom Controls */}
-        <div className={`absolute bottom-4 right-4 transition-opacity ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="glass-effect rounded-lg p-2 flex flex-col space-y-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setZoom(prev => Math.min(3, prev * 1.2))}
-              className="neon-border text-white border-white/30 hover:bg-white/10"
-            >
-              <Icon name="Plus" size={16} />
-            </Button>
-            <div className="text-center text-white text-sm font-mono">
-              {Math.round(zoom * 100)}%
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setZoom(prev => Math.max(0.5, prev * 0.8))}
-              className="neon-border text-white border-white/30 hover:bg-white/10"
-            >
-              <Icon name="Minus" size={16} />
-            </Button>
-          </div>
-        </div>
-
         {/* Instructions */}
-        <div className={`absolute bottom-4 left-4 glass-effect px-4 py-2 rounded-lg transition-opacity ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute bottom-4 left-4 glass-effect px-4 py-2 rounded-lg transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
           <p className="text-sm text-gray-300">
-            <Icon name="Mouse" size={16} className="inline mr-2" />
+            <Icon name="MousePointer" size={16} className="inline mr-2" />
             Drag to look around • Scroll to zoom
           </p>
           <p className="text-xs text-gray-400 mt-1">
