@@ -13,6 +13,7 @@ interface PanoramaSceneProps {
   onHotspotClick: (event: MouseEvent) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
+  onHotspotCreate?: (position: { x: number; y: number; z: number }) => void;
 }
 
 export default function PanoramaScene({
@@ -25,7 +26,8 @@ export default function PanoramaScene({
   onCanvasClick,
   onHotspotClick,
   onDragStart,
-  onDragEnd
+  onDragEnd,
+  onHotspotCreate
 }: PanoramaSceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -77,8 +79,29 @@ export default function PanoramaScene({
       return;
     }
 
-    onCanvasClick(event);
-  }, [isEditMode, isDragging, hotspots.length, onCanvasClick]);
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    const mouse = new THREE.Vector2();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, cameraRef.current);
+    
+    const intersects = raycaster.intersectObject(sphereRef.current);
+    if (intersects.length > 0) {
+      const point = intersects[0].point;
+      const normalizedPoint = point.normalize();
+      
+      // Передаем координаты напрямую в родительский компонент
+      if (onHotspotCreate) {
+        onHotspotCreate({
+          x: normalizedPoint.x,
+          y: normalizedPoint.y,
+          z: normalizedPoint.z
+        });
+      }
+    }
+  }, [isEditMode, isDragging, hotspots.length, onCanvasClick, sphereRef, cameraRef]);
 
   const handleHotspotClick = useCallback((event: MouseEvent) => {
     if (isEditMode || !cameraRef.current) return;

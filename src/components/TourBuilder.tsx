@@ -314,6 +314,7 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
                 <>
                   <Button
                     onClick={() => openViewer(false)}
+                    variant="outline"
                     className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black"
                   >
                     <Icon name="Play" size={16} className="mr-2" />

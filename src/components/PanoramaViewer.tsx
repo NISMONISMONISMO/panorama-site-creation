@@ -67,42 +67,21 @@ export default function PanoramaViewer({
     targetPanorama: string;
   } | null>(null);
 
+  const handleHotspotCreate = useCallback((position: { x: number; y: number; z: number }) => {
+    if (!isEditMode || hotspots.length >= 4) return;
+
+    setNewHotspotData({
+      ...position,
+      title: '',
+      targetPanorama: availablePanoramas.length > 0 ? availablePanoramas[0].id : ''
+    });
+    setIsCreatingHotspot(true);
+  }, [isEditMode, hotspots.length, availablePanoramas]);
+
   const handleCanvasClick = useCallback((event: MouseEvent) => {
-    if (!isEditMode || isDragging) return;
-    if (hotspots.length >= 4) {
-      alert('Максимум 4 hotspot\'а на панораму');
-      return;
-    }
-
-    const rect = (event.target as HTMLElement).getBoundingClientRect();
-    const mouse = new THREE.Vector2();
-    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-    // Используем raycasting для определения точки на сфере
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, new THREE.PerspectiveCamera(75, rect.width / rect.height, 0.1, 1000));
-    
-    // Создаем временную сферу для intersection
-    const tempGeometry = new THREE.SphereGeometry(500, 60, 40);
-    const tempMaterial = new THREE.MeshBasicMaterial();
-    const tempSphere = new THREE.Mesh(tempGeometry, tempMaterial);
-    
-    const intersects = raycaster.intersectObject(tempSphere);
-    if (intersects.length > 0) {
-      const point = intersects[0].point;
-      const normalizedPoint = point.normalize();
-      
-      setNewHotspotData({
-        x: normalizedPoint.x,
-        y: normalizedPoint.y,
-        z: normalizedPoint.z,
-        title: '',
-        targetPanorama: availablePanoramas.length > 0 ? availablePanoramas[0].id : ''
-      });
-      setIsCreatingHotspot(true);
-    }
-  }, [isEditMode, isDragging, hotspots.length, availablePanoramas]);
+    // Этот коллбэк больше не нужен для создания hotspot'ов
+    console.log('Canvas clicked');
+  }, []);
 
   const handleHotspotClick = useCallback((event: MouseEvent) => {
     if (isEditMode || !onPanoramaChange) return;
@@ -176,6 +155,7 @@ export default function PanoramaViewer({
           onHotspotClick={handleHotspotClick}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onHotspotCreate={handleHotspotCreate}
         />
 
         {/* Loading indicator */}
