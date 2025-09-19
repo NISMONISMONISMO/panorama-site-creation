@@ -29,7 +29,12 @@ export default function HotspotCreationModal({
   onTitleChange,
   onTargetChange
 }: HotspotCreationModalProps) {
-  if (!isVisible || !hotspotData) return null;
+  console.log('HotspotCreationModal render:', { isVisible, hotspotData, availablePanoramas: availablePanoramas.length });
+  
+  if (!isVisible || !hotspotData) {
+    console.log('HotspotCreationModal: not visible or no data');
+    return null;
+  }
 
   return (
     <div className="p-4 border-b border-white/20 bg-dark-300">

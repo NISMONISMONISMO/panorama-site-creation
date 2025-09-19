@@ -68,14 +68,26 @@ export default function PanoramaViewer({
   } | null>(null);
 
   const handleHotspotCreate = useCallback((position: { x: number; y: number; z: number }) => {
-    if (!isEditMode || hotspots.length >= 4) return;
+    console.log('PanoramaViewer: handleHotspotCreate called', { position, isEditMode, hotspotsLength: hotspots.length });
+    
+    if (!isEditMode) {
+      console.log('PanoramaViewer: Not in edit mode');
+      return;
+    }
+    
+    if (hotspots.length >= 4) {
+      console.log('PanoramaViewer: Too many hotspots');
+      return;
+    }
 
+    console.log('PanoramaViewer: Creating hotspot data');
     setNewHotspotData({
       ...position,
       title: '',
       targetPanorama: availablePanoramas.length > 0 ? availablePanoramas[0].id : ''
     });
     setIsCreatingHotspot(true);
+    console.log('PanoramaViewer: Hotspot creation modal should open');
   }, [isEditMode, hotspots.length, availablePanoramas]);
 
   const handleCanvasClick = useCallback((event: MouseEvent) => {

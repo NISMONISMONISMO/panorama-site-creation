@@ -73,7 +73,23 @@ export default function PanoramaScene({
   }, [hotspots, createHotspotMesh]);
 
   const handleCanvasClick = useCallback((event: MouseEvent) => {
-    if (!isEditMode || !cameraRef.current || !sphereRef.current || isDragging) return;
+    console.log('Canvas clicked!', { isEditMode, isDragging, hotspotsLength: hotspots.length });
+    
+    if (!isEditMode) {
+      console.log('Not in edit mode');
+      return;
+    }
+    
+    if (!cameraRef.current || !sphereRef.current) {
+      console.log('Camera or sphere not ready');
+      return;
+    }
+    
+    if (isDragging) {
+      console.log('User is dragging');
+      return;
+    }
+    
     if (hotspots.length >= 4) {
       alert('Максимум 4 hotspot\'а на панораму');
       return;
@@ -88,9 +104,13 @@ export default function PanoramaScene({
     raycaster.setFromCamera(mouse, cameraRef.current);
     
     const intersects = raycaster.intersectObject(sphereRef.current);
+    console.log('Intersects found:', intersects.length);
+    
     if (intersects.length > 0) {
       const point = intersects[0].point;
       const normalizedPoint = point.normalize();
+      
+      console.log('Creating hotspot at:', normalizedPoint);
       
       // Передаем координаты напрямую в родительский компонент
       if (onHotspotCreate) {
@@ -99,9 +119,12 @@ export default function PanoramaScene({
           y: normalizedPoint.y,
           z: normalizedPoint.z
         });
+        console.log('Hotspot creation callback called');
+      } else {
+        console.log('No onHotspotCreate callback');
       }
     }
-  }, [isEditMode, isDragging, hotspots.length, onCanvasClick, sphereRef, cameraRef]);
+  }, [isEditMode, isDragging, hotspots.length, onHotspotCreate]);
 
   const handleHotspotClick = useCallback((event: MouseEvent) => {
     if (isEditMode || !cameraRef.current) return;
