@@ -122,8 +122,9 @@ export default function PanoramaViewer({
       const deltaX = event.clientX - mouseRef.current.x;
       const deltaY = event.clientY - mouseRef.current.y;
 
-      phi += deltaX * 0.005;
-      theta -= deltaY * 0.005;
+      // Инвертируем управление как в Google Street View
+      phi -= deltaX * 0.005; // тащишь вправо - крутит влево
+      theta += deltaY * 0.005; // тащишь вниз - поднимает наверх
       
       // Limit vertical rotation
       theta = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, theta));
@@ -170,8 +171,9 @@ export default function PanoramaViewer({
       const deltaX = event.touches[0].clientX - mouseRef.current.x;
       const deltaY = event.touches[0].clientY - mouseRef.current.y;
 
-      phi += deltaX * 0.005;
-      theta -= deltaY * 0.005;
+      // Инвертируем управление как в Google Street View для touch
+      phi -= deltaX * 0.005; // тащишь вправо - крутит влево
+      theta += deltaY * 0.005; // тащишь вниз - поднимает наверх
       
       theta = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, theta));
 
