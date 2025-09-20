@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "name": "Get user panoramas (requires auth)",
+      "method": "GET",
+      "path": "/my-panoramas",
+      "headers": {
+        "X-Session-Token": "test-session"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Upload panorama without auth",
+      "method": "POST",
+      "path": "/upload",
+      "body": {
+        "title": "Test Panorama",
+        "file_data": "dGVzdA==",
+        "file_type": "image/jpeg"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Handle CORS OPTIONS",
+      "method": "OPTIONS",
+      "path": "/upload",
+      "expectedStatus": 200
+    }
+  ]
+}

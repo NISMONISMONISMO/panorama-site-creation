@@ -5,11 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import { apiService, User } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAuth: (user: any) => void;
+  onAuth: (user: User) => void;
 }
 
 export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
@@ -22,50 +24,80 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
     acceptTerms: false
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const { toast } = useToast();
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
-    // Simulate API call
-    setTimeout(() => {
-      const user = {
-        id: 'user-123',
-        name: formData.name || 'Demo User',
-        email: formData.email,
-        subscription: 'free',
-        uploads: activeTab === 'signup' ? 0 : 1,
-        maxUploads: 2,
-        role: formData.email.includes('admin') ? 'admin' : 'user',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(formData.email)}`
-      };
-      
-      onAuth(user);
-      setIsLoading(false);
+    try {
+      // Валидация
+      if (activeTab === 'signup') {
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error('Пароли не совпадают');
+        }
+        if (formData.password.length < 6) {
+          throw new Error('Пароль должен быть не менее 6 символов');
+        }
+        if (!formData.name.trim()) {
+          throw new Error('Имя обязательно');
+        }
+      }
+
+      if (!formData.email.trim() || !formData.password.trim()) {
+        throw new Error('Email и пароль обязательны');
+      }
+
+      // Выполняем запрос
+      let result;
+      if (activeTab === 'signup') {
+        result = await apiService.register(formData.email, formData.password, formData.name);
+        toast({
+          title: 'Регистрация успешна!',
+          description: 'Добро пожаловать в PanoramaSite',
+        });
+      } else {
+        result = await apiService.login(formData.email, formData.password);
+        toast({
+          title: 'Вход выполнен!',
+          description: `Добро пожаловать, ${result.user.name}`,
+        });
+      }
+
+      onAuth(result.user);
       onClose();
-    }, 1500);
+      
+      // Очищаем форму
+      setFormData({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        name: '',
+        acceptTerms: false
+      });
+      
+    } catch (error: any) {
+      setError(error.message);
+      toast({
+        title: 'Ошибка',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSocialAuth = (provider: string) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      const user = {
-        id: 'user-social-123',
-        name: `Demo User (${provider})`,
-        email: `demo@${provider.toLowerCase()}.com`,
-        subscription: 'free',
-        uploads: 0,
-        maxUploads: 2,
-        role: 'user',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${provider}`
-      };
-      
-      onAuth(user);
-      setIsLoading(false);
-      onClose();
-    }, 1000);
+    toast({
+      title: 'Функция недоступна',
+      description: `Авторизация через ${provider} будет добавлена позже`,
+      variant: 'destructive',
+    });
   };
 
   return (
@@ -93,6 +125,11 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
             </TabsList>
 
             <TabsContent value="signin" className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-md">
+                  <p className="text-red-200 text-sm">{error}</p>
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-white">Email</Label>
@@ -136,6 +173,11 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-4">
+              {error && (
+                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-md">
+                  <p className="text-red-200 text-sm">{error}</p>
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-white">Full Name</Label>
