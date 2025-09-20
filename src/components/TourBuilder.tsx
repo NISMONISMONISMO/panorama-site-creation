@@ -102,11 +102,15 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
       hotspots: []
     };
 
-    setCurrentTour(prev => ({
-      ...prev,
-      scenes: [...prev.scenes, newScene],
-      startingScene: prev.startingScene || newScene.id
-    }));
+    setCurrentTour(prev => {
+      const newScenes = [...prev.scenes, newScene];
+      return {
+        ...prev,
+        scenes: newScenes,
+        // Если это первая сцена ИЛИ нет стартовой сцены - делаем её стартовой
+        startingScene: prev.startingScene || newScene.id
+      };
+    });
   };
 
   const removeScene = (sceneId: string) => {
@@ -191,13 +195,16 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
   };
 
   const openViewer = (editMode = false) => {
-    if (!selectedScene) return;
-    
     if (editMode) {
-      // Для редактирования используем 2D редактор
+      // Для редактирования нужна выбранная сцена
+      if (!selectedScene) return;
       setShow2DEditor(true);
     } else {
-      // Для просмотра используем 3D вьювер
+      // Для просмотра начинаем с первой сцены в порядке (startingScene)
+      const startScene = currentTour.startingScene || currentTour.scenes[0]?.id;
+      if (!startScene) return;
+      
+      setSelectedScene(startScene); // Устанавливаем первую сцену как текущую
       setIsEditMode(false);
       setShowViewer(true);
     }
@@ -261,11 +268,13 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
 
         const newScenes = arrayMove(prev.scenes, oldIndex, newIndex);
         
+        // Стартовая сцена всегда первая в списке
+        const newStartingScene = newScenes[0]?.id || '';
+        
         return {
           ...prev,
           scenes: newScenes,
-          // Обновляем стартовую сцену если она была перемещена
-          startingScene: prev.startingScene === active.id ? over?.id as string : prev.startingScene
+          startingScene: newStartingScene
         };
       });
     }
@@ -409,25 +418,27 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
         <div className="p-4 border-b border-white/20 bg-dark-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              {/* Просмотр 360° доступен если есть сцены */}
+              {currentTour.scenes.length > 0 && (
+                <Button
+                  onClick={() => openViewer(false)}
+                  variant="outline"
+                  className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black"
+                >
+                  <Icon name="Play" size={16} className="mr-2" />
+                  Просмотр 360°
+                </Button>
+              )}
+              
+              {/* Редактирование hotspots доступно только для выбранной сцены */}
               {selectedScene && (
-                <>
-                  <Button
-                    onClick={() => openViewer(false)}
-                    variant="outline"
-                    className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black"
-                  >
-                    <Icon name="Play" size={16} className="mr-2" />
-                    Просмотр 360°
-                  </Button>
-                  
-                  <Button
-                    onClick={() => openViewer(true)}
-                    className="bg-neon-magenta text-white hover:bg-neon-magenta/80"
-                  >
-                    <Icon name="Edit" size={16} className="mr-2" />
-                    Редактировать Hotspots
-                  </Button>
-                </>
+                <Button
+                  onClick={() => openViewer(true)}
+                  className="bg-neon-magenta text-white hover:bg-neon-magenta/80"
+                >
+                  <Icon name="Edit" size={16} className="mr-2" />
+                  Редактировать Hotspots
+                </Button>
               )}
               
               <Button
