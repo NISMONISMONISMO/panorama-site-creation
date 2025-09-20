@@ -53,6 +53,11 @@ export default function TourViewer() {
           console.log('Loaded tour from localStorage:', parsedTour);
           console.log('Starting scene should be:', parsedTour.startingScene);
           console.log('All scenes:', parsedTour.scenes.map(s => ({ id: s.id, title: s.title })));
+          console.log('Hotspots in loaded tour:', parsedTour.scenes.map(s => ({
+            scene: s.title,
+            hotspotsCount: s.hotspots.length,
+            hotspots: s.hotspots.map(h => ({ title: h.title, target: h.targetPanorama }))
+          })));
           
           setTour(parsedTour);
           // Убеждаемся что стартовая сцена правильная
@@ -136,6 +141,10 @@ export default function TourViewer() {
       </div>
     );
   }
+  
+  console.log('TourViewer: Current scene:', currentScene.title);
+  console.log('TourViewer: Current scene hotspots:', currentScene.hotspots);
+  console.log('TourViewer: Hotspots count:', currentScene.hotspots.length);
 
   return (
     <PanoramaViewer

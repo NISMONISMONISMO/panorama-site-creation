@@ -260,6 +260,11 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
     console.log('Saving tour:', finalTour);
     console.log('Starting scene:', finalTour.startingScene);
     console.log('Scenes order:', finalTour.scenes.map(s => ({ id: s.id, title: s.title })));
+    console.log('Hotspots per scene:', finalTour.scenes.map(s => ({
+      scene: s.title,
+      hotspotsCount: s.hotspots.length,
+      hotspots: s.hotspots.map(h => ({ title: h.title, target: h.targetPanorama }))
+    })));
     
     // Сохраняем в localStorage
     try {

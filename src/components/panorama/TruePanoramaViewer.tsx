@@ -327,7 +327,13 @@ export default function TruePanoramaViewer({
 
   // Обновление hotspot'ов
   useEffect(() => {
-    if (!sceneRef.current) return;
+    console.log('TruePanoramaViewer: Updating hotspots, received:', hotspots.length, 'hotspots');
+    console.log('TruePanoramaViewer: Hotspots data:', hotspots);
+    
+    if (!sceneRef.current) {
+      console.log('TruePanoramaViewer: No scene ref, skipping hotspots update');
+      return;
+    }
 
     // Удаляем старые hotspot'ы
     hotspotMeshesRef.current.forEach(mesh => {
