@@ -50,13 +50,50 @@ export default function PanoramaEditor2D({
     setTargetPanorama(availablePanoramas.length > 0 ? availablePanoramas[0].id : '');
   };
 
+  // Конвертация 2D координат (проценты) в 3D координаты (сферические)
+  const convert2DTo3D = (xPercent: number, yPercent: number) => {
+    // Преобразуем проценты в углы
+    // Горизонтальный угол (phi): 0% = -π, 100% = π
+    const phi = (xPercent / 100) * 2 * Math.PI - Math.PI;
+    
+    // Вертикальный угол (theta): 0% = π/2, 100% = -π/2
+    const theta = Math.PI / 2 - (yPercent / 100) * Math.PI;
+    
+    // Преобразуем сферические координаты в декартовы
+    const x = Math.cos(theta) * Math.cos(phi);
+    const y = Math.sin(theta);
+    const z = Math.cos(theta) * Math.sin(phi);
+    
+    return { x, y, z };
+  };
+  
+  // Конвертация 3D координат обратно в 2D проценты
+  const convert3DTo2D = (x: number, y: number, z: number) => {
+    // Преобразуем декартовы координаты в сферические
+    const phi = Math.atan2(z, x);
+    const theta = Math.asin(y);
+    
+    // Преобразуем углы в проценты
+    const xPercent = ((phi + Math.PI) / (2 * Math.PI)) * 100;
+    const yPercent = ((Math.PI / 2 - theta) / Math.PI) * 100;
+    
+    return { x: xPercent, y: yPercent };
+  };
+
   const handleCreateHotspot = () => {
     if (!targetPanorama) return;
 
+    // Конвертируем 2D координаты в 3D
+    const position3D = convert2DTo3D(createPosition.x, createPosition.y);
+    
+    console.log('Creating hotspot:');
+    console.log('2D position:', createPosition);
+    console.log('3D position:', position3D);
+
     onHotspotCreate({
-      x: createPosition.x,
-      y: createPosition.y,
-      z: 0, // Не используется в 2D режиме
+      x: position3D.x,
+      y: position3D.y,
+      z: position3D.z,
       title: hotspotTitle || `Hotspot ${hotspots.length + 1}`,
       targetPanorama,
     });
@@ -103,14 +140,20 @@ export default function PanoramaEditor2D({
         />
 
         {/* Существующие hotspot'ы */}
-        {hotspots.map((hotspot) => (
-          <div
-            key={hotspot.id}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
-            style={{
-              left: `${hotspot.x}%`,
-              top: `${hotspot.y}%`,
-            }}
+        {hotspots.map((hotspot) => {
+          // Конвертируем 3D координаты в 2D для отображения
+          const position2D = typeof hotspot.x === 'number' && hotspot.x > 1 
+            ? { x: hotspot.x, y: hotspot.y } // Уже в процентах
+            : convert3DTo2D(hotspot.x, hotspot.y, hotspot.z); // Конвертируем из 3D
+            
+          return (
+            <div
+              key={hotspot.id}
+              className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
+              style={{
+                left: `${position2D.x}%`,
+                top: `${position2D.y}%`,
+              }}
           >
             {/* Hotspot marker */}
             <div className="w-8 h-8 bg-neon-cyan rounded-full border-2 border-white shadow-lg cursor-pointer animate-pulse">
@@ -135,7 +178,8 @@ export default function PanoramaEditor2D({
               </Button>
             </div>
           </div>
-        ))}
+        );
+        })}
 
         {/* Меню создания hotspot'а */}
         {showCreateMenu && (
