@@ -1,8 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
-import * as THREE from 'three';
 import PanoramaControls from './panorama/PanoramaControls';
 import PanoramaSidebar from './panorama/PanoramaSidebar';
-import PanoramaScene from './panorama/PanoramaScene';
+import SimplePanoramaViewer from './panorama/SimplePanoramaViewer';
 import { Hotspot, Panorama, Comment } from './panorama/types';
 
 interface PanoramaViewerProps {
@@ -48,9 +47,7 @@ export default function PanoramaViewer({
   onPanoramaChange
 }: PanoramaViewerProps) {
   const sceneRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
   const [comments, setComments] = useState<Comment[]>([
     { id: '1', author: 'VR_Explorer', text: 'Amazing view! The detail is incredible.', time: '2 hours ago' },
     { id: '2', author: 'TechVisionary', text: 'Perfect for my virtual office tour project.', time: '5 hours ago' }
@@ -156,29 +153,28 @@ export default function PanoramaViewer({
     <div className="fixed inset-0 z-50 bg-black flex">
       {/* Main Viewer */}
       <div className="flex-1 relative">
-        <PanoramaScene
+        <SimplePanoramaViewer 
           imageUrl={imageUrl}
-          hotspots={hotspots}
-          isEditMode={isEditMode}
-          isTour={isTour}
-          isDragging={isDragging}
-          onLoadingChange={setIsLoading}
-          onCanvasClick={handleCanvasClick}
-          onHotspotClick={handleHotspotClick}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onHotspotCreate={handleHotspotCreate}
+          className="w-full h-full"
         />
 
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <div className="text-white text-center">
-              <div className="animate-spin w-12 h-12 border-4 border-neon-cyan border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p>Loading panorama...</p>
-            </div>
+        {/* Hotspots overlay - только для просмотра, не для редактирования */}
+        {!isEditMode && hotspots.map((hotspot) => (
+          <div
+            key={hotspot.id}
+            className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
+            style={{
+              left: `${hotspot.x}%`,
+              top: `${hotspot.y}%`,
+            }}
+          >
+            <div 
+              className="w-6 h-6 bg-neon-cyan rounded-full border-2 border-white shadow-lg cursor-pointer animate-pulse hover:scale-110 transition-transform"
+              onClick={() => onPanoramaChange && onPanoramaChange(hotspot.targetPanorama)}
+              title={hotspot.title}
+            />
           </div>
-        )}
+        ))}
 
         <PanoramaControls
           title={title}

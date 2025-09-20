@@ -68,6 +68,8 @@ export default function TourViewer() {
         
         setTour(demoTour);
         setCurrentSceneId(demoTour.startingScene);
+        console.log('Tour set:', demoTour);
+        console.log('Starting scene ID set:', demoTour.startingScene);
       } catch (error) {
         console.error('Ошибка загрузки тура:', error);
       } finally {

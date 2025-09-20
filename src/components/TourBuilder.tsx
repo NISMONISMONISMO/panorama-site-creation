@@ -8,6 +8,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import PanoramaViewer from './PanoramaViewer';
 import PanoramaEditor2D from './panorama/PanoramaEditor2D';
+import SortableSceneCard from './SortableSceneCard';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 interface Hotspot {
   id: string;
@@ -64,6 +80,14 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
   const [show2DEditor, setShow2DEditor] = useState(false);
   const [tourUrl, setTourUrl] = useState<string>('');
   const [showPublishModal, setShowPublishModal] = useState(false);
+
+  // Drag & Drop сенсоры
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const addScene = (panoramaId: string) => {
@@ -227,6 +251,26 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
     alert('Тур успешно сохранен!');
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setCurrentTour(prev => {
+        const oldIndex = prev.scenes.findIndex(scene => scene.id === active.id);
+        const newIndex = prev.scenes.findIndex(scene => scene.id === over?.id);
+
+        const newScenes = arrayMove(prev.scenes, oldIndex, newIndex);
+        
+        return {
+          ...prev,
+          scenes: newScenes,
+          // Обновляем стартовую сцену если она была перемещена
+          startingScene: prev.startingScene === active.id ? over?.id as string : prev.startingScene
+        };
+      });
+    }
+  };
+
   const exportTour = () => {
     const tourData = {
       ...currentTour,
@@ -254,25 +298,14 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
         <div className="p-4 border-b border-white/20">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-orbitron font-bold text-white">Tour Builder</h2>
-            <div className="flex space-x-2">
-              <Button
-                onClick={saveTour}
-                disabled={currentTour.scenes.length === 0}
-                className="bg-neon-cyan text-black hover:bg-neon-cyan/80"
-                size="sm"
-              >
-                <Icon name="Save" size={14} className="mr-2" />
-                Сохранить тур
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onClose}
-                className="neon-border text-white border-white/30"
-              >
-                <Icon name="X" size={16} />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="neon-border text-white border-white/30"
+            >
+              <Icon name="X" size={16} />
+            </Button>
           </div>
 
           <div className="space-y-3">
@@ -298,44 +331,37 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
           </TabsList>
 
           <TabsContent value="scenes" className="flex-1 overflow-hidden">
-            <div className="p-4 space-y-3 h-full overflow-y-auto">
-              {currentTour.scenes.map((scene) => (
-                <Card
-                  key={scene.id}
-                  className={`cursor-pointer transition-all ${
-                    selectedScene === scene.id
-                      ? 'border-neon-cyan/50 bg-neon-cyan/10'
-                      : 'glass-effect border-white/20 hover:border-white/40'
-                  }`}
-                  onClick={() => setSelectedScene(scene.id)}
+            <div className="p-4 h-full overflow-y-auto">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={currentTour.scenes.map(s => s.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <div className="relative">
-                    <img
-                      src={scene.image}
-                      alt={scene.title}
-                      className="w-full h-24 object-cover rounded-t-lg"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeScene(scene.id);
-                      }}
-                      className="absolute top-2 right-2 w-6 h-6 p-0 bg-red-500/80 border-red-500 hover:bg-red-500"
-                    >
-                      <Icon name="X" size={12} />
-                    </Button>
-                    {currentTour.startingScene === scene.id && (
-                      <Badge className="absolute bottom-2 right-2 bg-neon-cyan text-black text-xs">Start</Badge>
-                    )}
+                  <div className="space-y-3">
+                    {currentTour.scenes.map((scene) => (
+                      <SortableSceneCard
+                        key={scene.id}
+                        scene={scene}
+                        isSelected={selectedScene === scene.id}
+                        onClick={() => setSelectedScene(scene.id)}
+                        onRemove={() => removeScene(scene.id)}
+                      />
+                    ))}
                   </div>
-                  <CardContent className="p-3">
-                    <h4 className="text-white font-semibold text-sm">{scene.title}</h4>
-                    <p className="text-gray-400 text-xs">{scene.hotspots.length} hotspots</p>
-                  </CardContent>
-                </Card>
-              ))}
+                </SortableContext>
+              </DndContext>
+
+              {currentTour.scenes.length === 0 && (
+                <div className="text-center text-gray-400 py-8">
+                  <Icon name="Images" size={48} className="mx-auto mb-4 opacity-50" />
+                  <p>Нет сцен в туре</p>
+                  <p className="text-sm">Добавьте панорамы из вкладки "Add"</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -414,6 +440,15 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
               >
                 <Icon name={previewMode ? 'Edit' : 'Eye'} size={16} className="mr-2" />
                 {previewMode ? 'Старый редактор' : 'Старый просмотр'}
+              </Button>
+
+              <Button
+                onClick={saveTour}
+                disabled={currentTour.scenes.length === 0}
+                className="bg-green-600 text-white hover:bg-green-500"
+              >
+                <Icon name="Save" size={16} className="mr-2" />
+                Сохранить
               </Button>
             </div>
 
@@ -592,7 +627,22 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
                     className="bg-dark-300 border-white/20 text-white"
                   />
                   <Button
-                    onClick={() => navigator.clipboard.writeText(tourUrl)}
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(tourUrl);
+                        alert('Ссылка скопирована!');
+                      } catch (err) {
+                        console.error('Ошибка копирования:', err);
+                        // Fallback для старых браузеров
+                        const textArea = document.createElement('textarea');
+                        textArea.value = tourUrl;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        alert('Ссылка скопирована!');
+                      }
+                    }}
                     variant="outline"
                     size="sm"
                     className="ml-2 border-white/30 text-white"
@@ -613,7 +663,23 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
                     className="bg-dark-300 border-white/20 text-white text-xs"
                   />
                   <Button
-                    onClick={() => navigator.clipboard.writeText(`<iframe src="${tourUrl}" width="800" height="600" frameborder="0"></iframe>`)}
+                    onClick={async () => {
+                      const embedCode = `<iframe src="${tourUrl}" width="800" height="600" frameborder="0"></iframe>`;
+                      try {
+                        await navigator.clipboard.writeText(embedCode);
+                        alert('Код интеграции скопирован!');
+                      } catch (err) {
+                        console.error('Ошибка копирования:', err);
+                        // Fallback для старых браузеров
+                        const textArea = document.createElement('textarea');
+                        textArea.value = embedCode;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        alert('Код интеграции скопирован!');
+                      }
+                    }}
                     variant="outline"
                     size="sm"
                     className="ml-2 border-white/30 text-white"
