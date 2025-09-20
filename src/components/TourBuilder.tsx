@@ -20,6 +20,7 @@ interface Hotspot {
 
 interface TourScene {
   id: string;
+  panoramaId: string; // ID исходной панорамы для отслеживания
   title: string;
   image: string;
   hotspots: Hotspot[];
@@ -67,6 +68,7 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
 
     const newScene: TourScene = {
       id: `scene-${Date.now()}`,
+      panoramaId: panoramaId, // Добавляем panoramaId для отслеживания
       title: panorama.title,
       image: panorama.image,
       hotspots: []

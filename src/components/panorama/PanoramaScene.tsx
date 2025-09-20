@@ -36,6 +36,7 @@ export default function PanoramaScene({
   const sphereRef = useRef<THREE.Mesh | null>(null);
   const hotspotMeshesRef = useRef<THREE.Mesh[]>([]);
   const mouseRef = useRef({ x: 0, y: 0 });
+  const mouseStartRef = useRef({ x: 0, y: 0 });
   const isMouseDownRef = useRef(false);
 
   const createHotspotMesh = useCallback((hotspot: Hotspot) => {
@@ -180,6 +181,8 @@ export default function PanoramaScene({
       isMouseDownRef.current = true;
       mouseRef.current.x = event.clientX;
       mouseRef.current.y = event.clientY;
+      mouseStartRef.current.x = event.clientX; // Запоминаем начальную позицию
+      mouseStartRef.current.y = event.clientY;
       mouseDownTime = Date.now();
       onDragStart();
     };
@@ -211,14 +214,26 @@ export default function PanoramaScene({
     const onMouseUp = (event: MouseEvent) => {
       const clickDuration = Date.now() - mouseDownTime;
       
-      console.log('PanoramaScene: onMouseUp', { clickDuration, isEditMode, isTour });
+      // Проверяем движение мыши
+      const deltaX = Math.abs(event.clientX - mouseStartRef.current.x);
+      const deltaY = Math.abs(event.clientY - mouseStartRef.current.y);
+      const totalMovement = deltaX + deltaY;
+      
+      console.log('PanoramaScene: onMouseUp', { 
+        clickDuration, 
+        isEditMode, 
+        isTour, 
+        movement: totalMovement 
+      });
       
       isMouseDownRef.current = false;
       onDragEnd();
       
-      // Если это был клик (короткое время), а не drag
-      if (clickDuration < 200) {
-        console.log('PanoramaScene: Short click detected');
+      // Это клик если: время < 500мс И движение мыши < 10 пикселей
+      const isClick = clickDuration < 500 && totalMovement < 10;
+      
+      if (isClick) {
+        console.log('PanoramaScene: Click detected');
         if (isEditMode) {
           console.log('PanoramaScene: Calling handleCanvasClick');
           handleCanvasClick(event);
@@ -227,7 +242,7 @@ export default function PanoramaScene({
           handleHotspotClick(event);
         }
       } else {
-        console.log('PanoramaScene: Long drag, not calling click handlers');
+        console.log('PanoramaScene: Drag detected, not calling click handlers');
       }
     };
 
@@ -330,18 +345,59 @@ export default function PanoramaScene({
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
-      renderer.domElement.removeEventListener('mousedown', onMouseDown);
-      renderer.domElement.removeEventListener('mousemove', onMouseMove);
-      renderer.domElement.removeEventListener('mouseup', onMouseUp);
-      renderer.domElement.removeEventListener('wheel', onWheel);
-      renderer.domElement.removeEventListener('touchstart', onTouchStart);
-      renderer.domElement.removeEventListener('touchmove', onTouchMove);
-      renderer.domElement.removeEventListener('touchend', onTouchEnd);
       
-      if (mountRef.current && renderer.domElement) {
+      // Удаляем слушатели
+      if (renderer.domElement) {
+        renderer.domElement.removeEventListener('mousedown', onMouseDown);
+        renderer.domElement.removeEventListener('mousemove', onMouseMove);
+        renderer.domElement.removeEventListener('mouseup', onMouseUp);
+        renderer.domElement.removeEventListener('wheel', onWheel);
+        renderer.domElement.removeEventListener('touchstart', onTouchStart);
+        renderer.domElement.removeEventListener('touchmove', onTouchMove);
+        renderer.domElement.removeEventListener('touchend', onTouchEnd);
+      }
+      
+      // Очищаем hotspot'ы
+      hotspotMeshesRef.current.forEach(mesh => {
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) {
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach(mat => mat.dispose());
+          } else {
+            mesh.material.dispose();
+          }
+        }
+      });
+      hotspotMeshesRef.current = [];
+      
+      // Очищаем сферу
+      if (sphere) {
+        if (sphere.geometry) sphere.geometry.dispose();
+        if (sphere.material) {
+          const material = sphere.material as THREE.MeshBasicMaterial;
+          if (material.map) material.map.dispose();
+          material.dispose();
+        }
+      }
+      
+      // Очищаем сцену
+      if (scene) {
+        scene.clear();
+      }
+      
+      // Удаляем DOM элемент
+      if (mountRef.current && renderer.domElement && mountRef.current.contains(renderer.domElement)) {
         mountRef.current.removeChild(renderer.domElement);
       }
+      
+      // Очищаем рендерер
       renderer.dispose();
+      
+      // Обнуляем ссылки
+      sceneRef.current = null;
+      rendererRef.current = null;
+      cameraRef.current = null;
+      sphereRef.current = null;
     };
   }, [isEditMode, isTour, handleCanvasClick, handleHotspotClick, onDragStart, onDragEnd]);
 
