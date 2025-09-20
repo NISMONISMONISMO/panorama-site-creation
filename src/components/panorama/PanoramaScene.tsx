@@ -73,38 +73,48 @@ export default function PanoramaScene({
   }, [hotspots, createHotspotMesh]);
 
   const handleCanvasClick = useCallback((event: MouseEvent) => {
-    console.log('Canvas clicked!', { isEditMode, isDragging, hotspotsLength: hotspots.length });
+    console.log('🎯 PanoramaScene: Canvas clicked!', { 
+      isEditMode, 
+      isDragging, 
+      hotspotsLength: hotspots.length,
+      hasOnHotspotCreate: !!onHotspotCreate
+    });
     
     if (!isEditMode) {
-      console.log('Not in edit mode');
+      console.log('❌ Not in edit mode');
       return;
     }
     
     if (!cameraRef.current || !sphereRef.current) {
-      console.log('Camera or sphere not ready');
+      console.log('❌ Camera or sphere not ready');
       return;
     }
     
     if (isDragging) {
-      console.log('User is dragging');
+      console.log('❌ User is dragging');
       return;
     }
     
     if (hotspots.length >= 4) {
+      console.log('❌ Too many hotspots');
       alert('Максимум 4 hotspot\'а на панораму');
       return;
     }
+
+    console.log('✅ All checks passed, proceeding with raycast');
 
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const mouse = new THREE.Vector2();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
+    console.log('📍 Mouse coordinates:', { x: mouse.x, y: mouse.y });
+
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, cameraRef.current);
     
     const intersects = raycaster.intersectObject(sphereRef.current);
-    console.log('Intersects found:', intersects.length);
+    console.log('🎯 Intersects found:', intersects.length);
     
     if (intersects.length > 0) {
       const point = intersects[0].point;
@@ -131,6 +141,7 @@ export default function PanoramaScene({
     onHotspotClick(event);
   }, [isEditMode, onHotspotClick]);
 
+  // Инициализация сцены только один раз
   useEffect(() => {
     if (!mountRef.current) return;
 
@@ -146,22 +157,6 @@ export default function PanoramaScene({
     // Create sphere for panorama
     const geometry = new THREE.SphereGeometry(500, 60, 40);
     const material = new THREE.MeshBasicMaterial({ side: THREE.BackSide });
-
-    // Load texture
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      imageUrl,
-      (texture) => {
-        material.map = texture;
-        material.needsUpdate = true;
-        onLoadingChange(false);
-      },
-      undefined,
-      (error) => {
-        console.error('Error loading panorama:', error);
-        onLoadingChange(false);
-      }
-    );
 
     const sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
@@ -216,16 +211,23 @@ export default function PanoramaScene({
     const onMouseUp = (event: MouseEvent) => {
       const clickDuration = Date.now() - mouseDownTime;
       
+      console.log('PanoramaScene: onMouseUp', { clickDuration, isEditMode, isTour });
+      
       isMouseDownRef.current = false;
       onDragEnd();
       
       // Если это был клик (короткое время), а не drag
       if (clickDuration < 200) {
+        console.log('PanoramaScene: Short click detected');
         if (isEditMode) {
+          console.log('PanoramaScene: Calling handleCanvasClick');
           handleCanvasClick(event);
         } else if (isTour) {
+          console.log('PanoramaScene: Calling handleHotspotClick');
           handleHotspotClick(event);
         }
+      } else {
+        console.log('PanoramaScene: Long drag, not calling click handlers');
       }
     };
 
@@ -341,7 +343,31 @@ export default function PanoramaScene({
       }
       renderer.dispose();
     };
-  }, [imageUrl, isEditMode, isTour, handleCanvasClick, handleHotspotClick, onLoadingChange, onDragStart, onDragEnd]);
+  }, [isEditMode, isTour, handleCanvasClick, handleHotspotClick, onDragStart, onDragEnd]);
+
+  // Загрузка текстуры отдельно
+  useEffect(() => {
+    if (!sphereRef.current) return;
+
+    onLoadingChange(true);
+    
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      imageUrl,
+      (texture) => {
+        if (sphereRef.current) {
+          (sphereRef.current.material as THREE.MeshBasicMaterial).map = texture;
+          (sphereRef.current.material as THREE.MeshBasicMaterial).needsUpdate = true;
+        }
+        onLoadingChange(false);
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading panorama:', error);
+        onLoadingChange(false);
+      }
+    );
+  }, [imageUrl, onLoadingChange]);
 
   // Update hotspots when they change
   useEffect(() => {

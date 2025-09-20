@@ -280,25 +280,37 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
 
           <TabsContent value="panoramas" className="flex-1 overflow-hidden">
             <div className="p-4 space-y-3 h-full overflow-y-auto">
-              {samplePanoramas.map((panorama) => (
-                <Card
-                  key={panorama.id}
-                  className="glass-effect border-white/20 hover:border-neon-cyan/50 transition-all cursor-pointer"
-                  onClick={() => addScene(panorama.id)}
-                >
-                  <img
-                    src={panorama.image}
-                    alt={panorama.title}
-                    className="w-full h-20 object-cover rounded-t-lg"
-                  />
-                  <CardContent className="p-3">
-                    <h4 className="text-white font-semibold text-sm">{panorama.title}</h4>
-                    <div className="flex items-center justify-center mt-2">
-                      <Icon name="Plus" className="text-neon-cyan" size={16} />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {samplePanoramas.map((panorama) => {
+                const isAdded = currentTour.scenes.some(scene => scene.panoramaId === panorama.id);
+                
+                return (
+                  <Card
+                    key={panorama.id}
+                    className={`glass-effect transition-all cursor-pointer ${
+                      isAdded 
+                        ? 'border-green-500/50 bg-green-500/10' 
+                        : 'border-white/20 hover:border-neon-cyan/50'
+                    }`}
+                    onClick={() => !isAdded && addScene(panorama.id)}
+                  >
+                    <img
+                      src={panorama.image}
+                      alt={panorama.title}
+                      className="w-full h-20 object-cover rounded-t-lg"
+                    />
+                    <CardContent className="p-3">
+                      <h4 className="text-white font-semibold text-sm">{panorama.title}</h4>
+                      <div className="flex items-center justify-center mt-2">
+                        {isAdded ? (
+                          <Icon name="Check" className="text-green-400" size={16} />
+                        ) : (
+                          <Icon name="Plus" className="text-neon-cyan" size={16} />
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
         </Tabs>
