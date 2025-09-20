@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
 import PanoramaControls from './panorama/PanoramaControls';
 import PanoramaSidebar from './panorama/PanoramaSidebar';
-import SimplePanoramaViewer from './panorama/SimplePanoramaViewer';
+import TruePanoramaViewer from './panorama/TruePanoramaViewer';
 import { Hotspot, Panorama, Comment } from './panorama/types';
 
 interface PanoramaViewerProps {
@@ -153,28 +153,16 @@ export default function PanoramaViewer({
     <div className="fixed inset-0 z-50 bg-black flex">
       {/* Main Viewer */}
       <div className="flex-1 relative">
-        <SimplePanoramaViewer 
+        <TruePanoramaViewer 
           imageUrl={imageUrl}
           className="w-full h-full"
+          hotspots={hotspots}
+          onHotspotClick={(hotspot) => {
+            if (onPanoramaChange) {
+              onPanoramaChange(hotspot.hotspot.targetPanorama);
+            }
+          }}
         />
-
-        {/* Hotspots overlay - только для просмотра, не для редактирования */}
-        {!isEditMode && hotspots.map((hotspot) => (
-          <div
-            key={hotspot.id}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10"
-            style={{
-              left: `${hotspot.x}%`,
-              top: `${hotspot.y}%`,
-            }}
-          >
-            <div 
-              className="w-6 h-6 bg-neon-cyan rounded-full border-2 border-white shadow-lg cursor-pointer animate-pulse hover:scale-110 transition-transform"
-              onClick={() => onPanoramaChange && onPanoramaChange(hotspot.targetPanorama)}
-              title={hotspot.title}
-            />
-          </div>
-        ))}
 
         <PanoramaControls
           title={title}
