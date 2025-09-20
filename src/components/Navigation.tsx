@@ -82,12 +82,16 @@ export default function Navigation({
                   size="sm"
                   className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                 >
-                  <img 
-                    src={user?.avatar} 
-                    alt={user?.name} 
-                    className="w-5 h-5 rounded-full mr-2" 
-                  />
-                  {user?.name}
+                  {user?.avatar ? (
+                    <img 
+                      src={user.avatar} 
+                      alt={user?.name || 'User'} 
+                      className="w-5 h-5 rounded-full mr-2" 
+                    />
+                  ) : (
+                    <Icon name="User" size={16} className="mr-2" />
+                  )}
+                  {user?.name || user?.email || 'Profile'}
                 </Button>
                 
                 {user?.role === 'admin' && (

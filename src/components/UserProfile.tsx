@@ -18,14 +18,14 @@ interface UserProfileProps {
 export default function UserProfile({ user, onClose, onLogout, onUpgrade }: UserProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: user.name,
-    email: user.email,
+    name: user?.name || 'Пользователь',
+    email: user?.email || '',
     bio: 'Энтузиаст VR и создатель панорам'
   });
 
   const userPanoramas = [
-    { id: '1', title: 'Моя первая 360° фотография', views: 156, likes: 23, status: 'active', expiresIn: user.subscription === 'free' ? '18 часов' : null },
-    { id: '2', title: 'Вид на город на закате', views: 89, likes: 12, status: 'active', expiresIn: user.subscription === 'free' ? '6 часов' : null },
+    { id: '1', title: 'Моя первая 360° фотография', views: 156, likes: 23, status: 'active', expiresIn: userSubscription === 'free' ? '18 часов' : null },
+    { id: '2', title: 'Вид на город на закате', views: 89, likes: 12, status: 'active', expiresIn: userSubscription === 'free' ? '6 часов' : null },
   ];
 
   const userTours = [
@@ -39,8 +39,9 @@ export default function UserProfile({ user, onClose, onLogout, onUpgrade }: User
     business: { uploads: 'Безлимит', storage: 'Постоянно', tours: 'Безлимит', embedding: true }
   };
 
-  const currentLimits = subscriptionLimits[user.subscription as keyof typeof subscriptionLimits];
-  const uploadProgress = user.subscription === 'free' ? (user.uploads / user.maxUploads) * 100 : 0;
+  const userSubscription = user?.subscription_type || user?.subscription || 'free';
+  const currentLimits = subscriptionLimits[userSubscription as keyof typeof subscriptionLimits];
+  const uploadProgress = userSubscription === 'free' ? (user?.uploads || 0) / (user?.maxUploads || 2) * 100 : 0;
 
   const handleSaveProfile = () => {
     setIsEditing(false);
@@ -77,20 +78,26 @@ export default function UserProfile({ user, onClose, onLogout, onUpgrade }: User
             <Card className="card-minimal border-slate-200 mb-6">
               <CardHeader className="text-center">
                 <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-slate-400 to-slate-600 p-1">
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-full h-full rounded-full object-cover bg-slate-200"
-                  />
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user?.name || 'User'}
+                      className="w-full h-full rounded-full object-cover bg-slate-200"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-slate-200 flex items-center justify-center">
+                      <Icon name="User" size={32} className="text-slate-500" />
+                    </div>
+                  )}
                 </div>
-                <CardTitle className="text-slate-900">{user.name}</CardTitle>
-                <p className="text-slate-600">{user.email}</p>
+                <CardTitle className="text-slate-900">{user?.name || 'Пользователь'}</CardTitle>
+                <p className="text-slate-600">{user?.email || ''}</p>
                 <Badge className={`${
-                  user.subscription === 'free' ? 'bg-slate-500' :
-                  user.subscription === 'premium' ? 'bg-blue-500' :
+                  userSubscription === 'free' ? 'bg-slate-500' :
+                  userSubscription === 'premium' || userSubscription === 'pro' ? 'bg-blue-500' :
                   'bg-purple-500'
                 } text-white`}>
-                  {user.subscription.toUpperCase()}
+                  {userSubscription.toUpperCase()}
                 </Badge>
               </CardHeader>
               <CardContent>
@@ -156,10 +163,10 @@ export default function UserProfile({ user, onClose, onLogout, onUpgrade }: User
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-600">Загрузки</span>
                     <span className="text-slate-900 font-medium">
-                      {user.subscription === 'free' ? `${user.uploads}/${user.maxUploads}` : currentLimits.uploads}
+                      {userSubscription === 'free' ? `${user?.uploads || 0}/${user?.maxUploads || 2}` : currentLimits.uploads}
                     </span>
                   </div>
-                  {user.subscription === 'free' && (
+                  {userSubscription === 'free' && (
                     <Progress value={uploadProgress} className="h-2" />
                   )}
                 </div>
@@ -179,7 +186,7 @@ export default function UserProfile({ user, onClose, onLogout, onUpgrade }: User
                   </div>
                 </div>
 
-                {user.subscription === 'free' && (
+                {userSubscription === 'free' && (
                   <Button
                     onClick={onUpgrade}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"

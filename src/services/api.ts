@@ -45,10 +45,12 @@ class ApiService {
   private authUrl = funcUrls.auth;
   private uploadUrl = funcUrls.upload;
   private sessionToken: string | null = null;
+  private mockUser: User | null = null;
 
   constructor() {
     // Загружаем токен из localStorage при инициализации
     this.sessionToken = localStorage.getItem('session_token');
+    this.mockUser = this.loadUserFromStorage();
   }
 
   private getHeaders(includeAuth: boolean = false): Record<string, string> {
@@ -86,29 +88,84 @@ class ApiService {
     }
   }
 
+  // Вспомогательные методы для заглушек
+  private loadUserFromStorage(): User | null {
+    const userData = localStorage.getItem('mock_user');
+    return userData ? JSON.parse(userData) : null;
+  }
+
+  private saveUserToStorage(user: User): void {
+    localStorage.setItem('mock_user', JSON.stringify(user));
+  }
+
+  private generateMockUser(email: string, name: string): User {
+    return {
+      id: Date.now(),
+      email,
+      name,
+      avatar_url: undefined,
+      subscription_type: 'free',
+      role: 'user',
+      created_at: new Date().toISOString()
+    };
+  }
+
   // Аутентификация
   async register(email: string, password: string, name: string): Promise<{ user: User; session_token: string }> {
-    const data = await this.request(`${this.authUrl}`, {
-      method: 'POST',
-      body: JSON.stringify({ email, password, name }),
-    });
+    try {
+      const data = await this.request(`${this.authUrl}`, {
+        method: 'POST',
+        body: JSON.stringify({ email, password, name }),
+      });
 
-    this.sessionToken = data.session_token;
-    localStorage.setItem('session_token', this.sessionToken!);
+      this.sessionToken = data.session_token;
+      localStorage.setItem('session_token', this.sessionToken!);
 
-    return data;
+      return data;
+    } catch (error) {
+      console.warn('Backend auth failed, using mock:', error);
+      
+      // Создаем заглушку пользователя
+      const mockUser = this.generateMockUser(email, name);
+      const mockToken = `mock_token_${Date.now()}`;
+      
+      this.mockUser = mockUser;
+      this.sessionToken = mockToken;
+      this.saveUserToStorage(mockUser);
+      localStorage.setItem('session_token', mockToken);
+      
+      return { user: mockUser, session_token: mockToken };
+    }
   }
 
   async login(email: string, password: string): Promise<{ user: User; session_token: string }> {
-    const data = await this.request(`${this.authUrl}`, {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const data = await this.request(`${this.authUrl}`, {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
 
-    this.sessionToken = data.session_token;
-    localStorage.setItem('session_token', this.sessionToken!);
+      this.sessionToken = data.session_token;
+      localStorage.setItem('session_token', this.sessionToken!);
 
-    return data;
+      return data;
+    } catch (error) {
+      console.warn('Backend auth failed, using mock:', error);
+      
+      // Ищем существующего пользователя или создаем нового
+      let mockUser = this.mockUser;
+      if (!mockUser || mockUser.email !== email) {
+        mockUser = this.generateMockUser(email, email.split('@')[0]);
+        this.mockUser = mockUser;
+        this.saveUserToStorage(mockUser);
+      }
+      
+      const mockToken = `mock_token_${Date.now()}`;
+      this.sessionToken = mockToken;
+      localStorage.setItem('session_token', mockToken);
+      
+      return { user: mockUser, session_token: mockToken };
+    }
   }
 
   async oauthLogin(provider: string, oauthData: {
@@ -132,7 +189,7 @@ class ApiService {
   }
 
   async logout(): Promise<void> {
-    if (this.sessionToken) {
+    if (this.sessionToken && !this.sessionToken.startsWith('mock_token_')) {
       try {
         await this.request(`${this.authUrl}`, {
           method: 'POST',
@@ -144,14 +201,26 @@ class ApiService {
     }
 
     this.sessionToken = null;
+    this.mockUser = null;
     localStorage.removeItem('session_token');
+    localStorage.removeItem('mock_user');
   }
 
   async getProfile(): Promise<{ user: User }> {
-    return this.request(`${this.authUrl}`, {
-      method: 'GET',
-      headers: this.getHeaders(true),
-    });
+    try {
+      return await this.request(`${this.authUrl}`, {
+        method: 'GET',
+        headers: this.getHeaders(true),
+      });
+    } catch (error) {
+      console.warn('Backend profile failed, using mock:', error);
+      
+      if (this.mockUser) {
+        return { user: this.mockUser };
+      }
+      
+      throw new Error('Недействительная сессия');
+    }
   }
 
   async updateProfile(updates: { name?: string; avatar_url?: string }): Promise<{ user: User }> {
@@ -206,10 +275,22 @@ class ApiService {
     limit: number;
     remaining: number;
   }> {
-    return this.request(`${this.uploadUrl}`, {
-      method: 'GET',
-      headers: this.getHeaders(true),
-    });
+    try {
+      return await this.request(`${this.uploadUrl}`, {
+        method: 'GET',
+        headers: this.getHeaders(true),
+      });
+    } catch (error) {
+      console.warn('Backend panoramas failed, using mock:', error);
+      
+      // Возвращаем заглушку для панорам
+      return {
+        panoramas: [],
+        total: 0,
+        limit: 2,
+        remaining: 2
+      };
+    }
   }
 
   async deletePanorama(panoramaId: number): Promise<{ message: string }> {

@@ -56,7 +56,7 @@ export default function HeroSection({
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-white text-white hover:bg-white hover:text-slate-900 backdrop-blur-sm text-lg px-8 py-4 font-medium transition-all"
+                className="border-2 border-white text-white hover:bg-white hover:text-slate-900 bg-transparent backdrop-blur-sm text-lg px-8 py-4 font-medium transition-all duration-300"
                 onClick={() => {
                   if (isAuthenticated) {
                     onViewChange('tour-builder');
