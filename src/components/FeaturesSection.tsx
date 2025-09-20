@@ -1,27 +1,30 @@
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function FeaturesSection() {
+  const { t } = useLanguage();
+  
   const features = [
     { 
       icon: 'MousePointer', 
-      title: 'Interactive Experience', 
-      desc: 'Navigate seamlessly through 360° environments with intuitive controls'
+      title: t('features.interactive.title'), 
+      desc: t('features.interactive.desc')
     },
     { 
       icon: 'Sparkles', 
-      title: 'Premium Quality', 
-      desc: 'High-resolution imagery delivers exceptional clarity and detail'
+      title: t('features.quality.title'), 
+      desc: t('features.quality.desc')
     },
     { 
       icon: 'Route', 
-      title: 'Virtual Tours', 
-      desc: 'Create connected experiences that guide viewers through multiple scenes'
+      title: t('features.virtualTours.title'), 
+      desc: t('features.virtualTours.desc')
     },
     { 
       icon: 'Share2', 
-      title: 'Easy Integration', 
-      desc: 'Embed tours anywhere or share with custom links and social media'
+      title: t('features.integration.title'), 
+      desc: t('features.integration.desc')
     }
   ];
 
@@ -30,10 +33,10 @@ export default function FeaturesSection() {
       <div className="section-container">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-            Professional Features
+            {t('features.title')}
           </h2>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Everything you need to create and share immersive virtual experiences
+            {t('features.subtitle')}
           </p>
         </div>
         

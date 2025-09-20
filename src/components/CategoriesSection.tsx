@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CategoriesSectionProps {
   categories: any[];
@@ -16,6 +17,33 @@ export default function CategoriesSection({
   onViewChange,
   onAuthShow
 }: CategoriesSectionProps) {
+  const { t } = useLanguage();
+  
+  // Генерируем локализованные данные категорий
+  const localizedCategories = [
+    {
+      id: 'panoramas',
+      title: t('categories.panoramas'),
+      image: '/img/0d73c593-b178-45de-a0a6-a09f6852469c.jpg',
+      description: t('categories.panoramasDesc'),
+      count: t('categories.panoramasCount')
+    },
+    {
+      id: 'tours',
+      title: t('categories.tours'),
+      image: '/img/235da2ea-2df7-4e21-a478-a732a35b8505.jpg',
+      description: t('categories.toursDesc'),
+      count: t('categories.toursCount')
+    },
+    {
+      id: 'create',
+      title: t('categories.getStarted'),
+      image: '/img/8bea7245-6694-4648-ab97-9e56dc74ed7c.jpg',
+      description: t('categories.getStartedDesc'),
+      count: ''
+    }
+  ];
+  
   const handleCategoryClick = (category: any) => {
     if (category.id === 'create') {
       if (isAuthenticated) {
@@ -33,15 +61,15 @@ export default function CategoriesSection({
       <div className="section-container">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-            Что вы хотите сделать?
+            {t('categories.whatDoYouWant')}
           </h2>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Выберите, как вы хотите использовать нашу платформу для создания виртуальных впечатлений
+            {t('categories.chooseHow')}
           </p>
         </div>
         
         <div className="grid md:grid-cols-3 gap-8">
-          {categories.map((category, index) => (
+          {localizedCategories.map((category, index) => (
             <Card 
               key={category.id} 
               className="card-minimal hover:shadow-lg transition-all duration-300 group cursor-pointer border-slate-200 hover:border-slate-300"
