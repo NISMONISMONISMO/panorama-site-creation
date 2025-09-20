@@ -92,12 +92,34 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
     }
   };
 
-  const handleSocialAuth = (provider: string) => {
-    toast({
-      title: 'Функция недоступна',
-      description: `Авторизация через ${provider} будет добавлена позже`,
-      variant: 'destructive',
-    });
+  const handleSocialAuth = async (provider: string) => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      switch (provider.toLowerCase()) {
+        case 'google':
+          apiService.googleLogin();
+          break;
+        case 'yandex':
+          apiService.yandexLogin();
+          break;
+        case 'vk':
+          apiService.vkLogin();
+          break;
+        default:
+          throw new Error(`Провайдер ${provider} не поддерживается`);
+      }
+    } catch (error: any) {
+      setError(error.message);
+      toast({
+        title: 'Ошибка OAuth',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -254,24 +276,35 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => handleSocialAuth('Google')}
+                  disabled={isLoading}
+                  className="neon-border border-white/30 text-white hover:bg-white/10"
+                >
+                  <Icon name="Chrome" size={16} className="mr-2" />
+                  Google
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleSocialAuth('Yandex')}
+                  disabled={isLoading}
+                  className="neon-border border-white/30 text-white hover:bg-white/10"
+                >
+                  <span className="mr-2 text-red-500 font-bold">Я</span>
+                  Яндекс ID
+                </Button>
+              </div>
               <Button
                 variant="outline"
-                onClick={() => handleSocialAuth('Google')}
+                onClick={() => handleSocialAuth('VK')}
                 disabled={isLoading}
-                className="neon-border border-white/30 text-white hover:bg-white/10"
+                className="w-full neon-border border-white/30 text-white hover:bg-white/10"
               >
-                <Icon name="Chrome" size={16} className="mr-2" />
-                Google
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleSocialAuth('Facebook')}
-                disabled={isLoading}
-                className="neon-border border-white/30 text-white hover:bg-white/10"
-              >
-                <Icon name="Facebook" size={16} className="mr-2" />
-                Facebook
+                <span className="mr-2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold">VK</span>
+                ВКонтакте
               </Button>
             </div>
           </div>

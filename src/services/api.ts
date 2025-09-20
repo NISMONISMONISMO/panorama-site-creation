@@ -88,7 +88,7 @@ class ApiService {
 
   // Аутентификация
   async register(email: string, password: string, name: string): Promise<{ user: User; session_token: string }> {
-    const data = await this.request(`${this.authUrl}/register`, {
+    const data = await this.request(`${this.authUrl}`, {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     });
@@ -100,9 +100,29 @@ class ApiService {
   }
 
   async login(email: string, password: string): Promise<{ user: User; session_token: string }> {
-    const data = await this.request(`${this.authUrl}/login`, {
+    const data = await this.request(`${this.authUrl}`, {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+    });
+
+    this.sessionToken = data.session_token;
+    localStorage.setItem('session_token', this.sessionToken!);
+
+    return data;
+  }
+
+  async oauthLogin(provider: string, oauthData: {
+    oauth_id: string;
+    email: string;
+    name: string;
+    avatar_url?: string;
+  }): Promise<{ user: User; session_token: string; is_new_user: boolean }> {
+    const data = await this.request(`${this.authUrl}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        provider,
+        ...oauthData
+      }),
     });
 
     this.sessionToken = data.session_token;
@@ -114,7 +134,7 @@ class ApiService {
   async logout(): Promise<void> {
     if (this.sessionToken) {
       try {
-        await this.request(`${this.authUrl}/logout`, {
+        await this.request(`${this.authUrl}`, {
           method: 'POST',
           headers: this.getHeaders(true),
         });
@@ -128,14 +148,14 @@ class ApiService {
   }
 
   async getProfile(): Promise<{ user: User }> {
-    return this.request(`${this.authUrl}/profile`, {
+    return this.request(`${this.authUrl}`, {
       method: 'GET',
       headers: this.getHeaders(true),
     });
   }
 
   async updateProfile(updates: { name?: string; avatar_url?: string }): Promise<{ user: User }> {
-    return this.request(`${this.authUrl}/profile`, {
+    return this.request(`${this.authUrl}`, {
       method: 'PUT',
       headers: this.getHeaders(true),
       body: JSON.stringify(updates),
@@ -158,7 +178,7 @@ class ApiService {
           const fileData = reader.result as string;
           const base64Data = fileData.split(',')[1]; // Убираем data:image/...;base64, префикс
 
-          const data = await this.request(`${this.uploadUrl}/upload`, {
+          const data = await this.request(`${this.uploadUrl}`, {
             method: 'POST',
             headers: this.getHeaders(true),
             body: JSON.stringify({
@@ -186,7 +206,7 @@ class ApiService {
     limit: number;
     remaining: number;
   }> {
-    return this.request(`${this.uploadUrl}/my-panoramas`, {
+    return this.request(`${this.uploadUrl}`, {
       method: 'GET',
       headers: this.getHeaders(true),
     });
@@ -197,6 +217,60 @@ class ApiService {
       method: 'DELETE',
       headers: this.getHeaders(true),
     });
+  }
+
+  // OAuth провайдеры
+  initGoogleAuth(): void {
+    // Настройка Google OAuth
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.onload = () => {
+      (window as any).google?.accounts.id.initialize({
+        client_id: '869752367387-v6d2pv4bv1u2lhq6g5o6m0qf6v9s1q2l.apps.googleusercontent.com', // Demo client ID
+        callback: this.handleGoogleResponse.bind(this)
+      });
+    };
+    document.head.appendChild(script);
+  }
+
+  private handleGoogleResponse(response: any): void {
+    try {
+      const payload = JSON.parse(atob(response.credential.split('.')[1]));
+      this.oauthLogin('google', {
+        oauth_id: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        avatar_url: payload.picture
+      });
+    } catch (error) {
+      console.error('Google OAuth error:', error);
+    }
+  }
+
+  googleLogin(): void {
+    if ((window as any).google?.accounts.id) {
+      (window as any).google.accounts.id.prompt();
+    } else {
+      console.error('Google OAuth not initialized');
+    }
+  }
+
+  yandexLogin(): void {
+    // Яндекс OAuth
+    const clientId = 'demo_client_id';
+    const redirectUri = encodeURIComponent(window.location.origin + '/auth/yandex');
+    const authUrl = `https://oauth.yandex.ru/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=login:email%20login:info`;
+    
+    window.location.href = authUrl;
+  }
+
+  vkLogin(): void {
+    // VK OAuth
+    const clientId = 'demo_client_id';
+    const redirectUri = encodeURIComponent(window.location.origin + '/auth/vk');
+    const authUrl = `https://oauth.vk.com/authorize?client_id=${clientId}&display=popup&redirect_uri=${redirectUri}&scope=email&response_type=code&v=5.131`;
+    
+    window.location.href = authUrl;
   }
 
   // Утилиты
@@ -210,4 +284,10 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
+
+// Инициализируем OAuth провайдеры при загрузке
+if (typeof window !== 'undefined') {
+  apiService.initGoogleAuth();
+}
+
 export default apiService;
