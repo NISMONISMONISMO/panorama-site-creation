@@ -168,6 +168,7 @@ function Index() {
           onSearchChange={setSearchQuery}
           onCategoryChange={setSelectedCategory}
           onPanoramaClick={handlePanoramaClick}
+          onBackToHome={() => setCurrentView('home')}
         />
       )}
       

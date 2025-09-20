@@ -64,7 +64,7 @@ export default function Navigation({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-white/80 text-white hover:bg-white hover:text-slate-900 backdrop-blur-sm font-medium"
+                  className="border-white/90 text-white bg-transparent hover:bg-white hover:text-slate-900 backdrop-blur-sm font-medium"
                   disabled={user?.subscription === 'free' && user?.uploads >= user?.maxUploads}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
@@ -111,7 +111,7 @@ export default function Navigation({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-white/80 text-white hover:bg-white hover:text-slate-900 backdrop-blur-sm font-medium"
+                  className="border-slate-600 text-slate-700 bg-white/90 hover:bg-white hover:text-slate-900 backdrop-blur-sm font-medium"
                   onClick={onAuthShow}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
@@ -119,10 +119,10 @@ export default function Navigation({
                 </Button>
                 <Button 
                   size="sm"
-                  className="bg-white text-slate-900 hover:bg-white/90 font-medium shadow-sm"
+                  className="bg-slate-900 text-white hover:bg-slate-800 font-medium shadow-sm"
                   onClick={onAuthShow}
                 >
-                  Sign In
+                  Войти
                 </Button>
               </>
             )}

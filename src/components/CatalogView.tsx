@@ -1,6 +1,7 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 
@@ -12,6 +13,7 @@ interface CatalogViewProps {
   onSearchChange: (query: string) => void;
   onCategoryChange: (category: string) => void;
   onPanoramaClick: (panorama: any) => void;
+  onBackToHome: () => void;
 }
 
 export default function CatalogView({
@@ -21,13 +23,31 @@ export default function CatalogView({
   isAuthenticated,
   onSearchChange,
   onCategoryChange,
-  onPanoramaClick
+  onPanoramaClick,
+  onBackToHome
 }: CatalogViewProps) {
   return (
-    <div className="pt-24 bg-slate-50 min-h-screen">
+    <div className="pt-24 bg-slate-100 min-h-screen">
       <div className="section-container py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              onClick={onBackToHome}
+              className="border-slate-300 text-slate-700 hover:bg-slate-50"
+            >
+              <Icon name="ArrowLeft" size={16} className="mr-2" />
+              Назад
+            </Button>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-slate-300 rounded-lg flex items-center justify-center">
+                <Icon name="Globe" className="text-slate-700" size={20} />
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900">Галерея панорам</h1>
+            </div>
+          </div>
+        </div>
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">Галерея панорам</h1>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <Input
