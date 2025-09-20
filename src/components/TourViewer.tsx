@@ -46,7 +46,21 @@ export default function TourViewer() {
         console.log('Loading tour:', tourId);
         
         // Пытаемся загрузить тур из localStorage
-        const tourData = localStorage.getItem(`tour_${tourId}`);
+        let tourData = localStorage.getItem(`tour_${tourId}`);
+        
+        // Если тура нет в localStorage, проверяем URL-параметры
+        if (!tourData) {
+          const urlParams = new URLSearchParams(window.location.search);
+          const encodedTour = urlParams.get('data');
+          if (encodedTour) {
+            try {
+              tourData = decodeURIComponent(encodedTour);
+              console.log('Tour loaded from URL parameters');
+            } catch (error) {
+              console.error('Error decoding tour from URL:', error);
+            }
+          }
+        }
         
         if (tourData) {
           const parsedTour: Tour = JSON.parse(tourData);

@@ -281,8 +281,14 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
       });
       localStorage.setItem('all_tours', JSON.stringify(allTours));
       
-      const baseUrl = window.location.origin;
-      const tourLink = `${baseUrl}/tour/${tourId}`;
+      // Используем preview-домен для ссылки на тур
+      const baseUrl = window.location.hostname.includes('poehali.dev') 
+        ? 'https://preview--panorama-site-creation.poehali.dev'
+        : window.location.origin;
+        
+      // Передаём данные тура через URL-параметры
+      const encodedTourData = encodeURIComponent(JSON.stringify(finalTour));
+      const tourLink = `${baseUrl}/tour/${tourId}?data=${encodedTourData}`;
       
       setTourUrl(tourLink);
       setShowPublishModal(true);
