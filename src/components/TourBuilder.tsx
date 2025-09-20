@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -57,6 +57,13 @@ const samplePanoramas = [
   { id: '3', title: 'Lake View', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2048&h=1024&fit=crop' }
 ];
 
+interface UploadedPanorama {
+  id: string;
+  title: string;
+  image: string;
+  file: File;
+}
+
 export default function TourBuilder({ onClose }: { onClose: () => void }) {
   const [currentTour, setCurrentTour] = useState<Tour>({
     id: 'new-tour',
@@ -80,6 +87,8 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
   const [show2DEditor, setShow2DEditor] = useState(false);
   const [tourUrl, setTourUrl] = useState<string>('');
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [uploadedPanoramas, setUploadedPanoramas] = useState<UploadedPanorama[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Drag & Drop сенсоры
   const sensors = useSensors(
@@ -90,13 +99,58 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
   );
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      // Проверяем что это изображение
+      if (!file.type.startsWith('image/')) {
+        alert(`Файл ${file.name} не является изображением`);
+        return;
+      }
+
+      // Создаем URL для превью
+      const imageUrl = URL.createObjectURL(file);
+      
+      const uploadedPanorama: UploadedPanorama = {
+        id: `uploaded-${Date.now()}-${Math.random()}`,
+        title: file.name.replace(/\.[^/.]+$/, ''), // Убираем расширение
+        image: imageUrl,
+        file: file
+      };
+
+      setUploadedPanoramas(prev => [...prev, uploadedPanorama]);
+    });
+
+    // Очищаем input для возможности загрузки тех же файлов снова
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeUploadedPanorama = (panoramaId: string) => {
+    setUploadedPanoramas(prev => {
+      const panorama = prev.find(p => p.id === panoramaId);
+      if (panorama) {
+        // Освобождаем URL объект
+        URL.revokeObjectURL(panorama.image);
+      }
+      return prev.filter(p => p.id !== panoramaId);
+    });
+  };
+
   const addScene = (panoramaId: string) => {
-    const panorama = samplePanoramas.find(p => p.id === panoramaId);
+    // Ищем сначала в загруженных, потом в примерах
+    const uploadedPanorama = uploadedPanoramas.find(p => p.id === panoramaId);
+    const samplePanorama = samplePanoramas.find(p => p.id === panoramaId);
+    
+    const panorama = uploadedPanorama || samplePanorama;
     if (!panorama) return;
 
     const newScene: TourScene = {
       id: `scene-${Date.now()}`,
-      panoramaId: panoramaId, // Добавляем panoramaId для отслеживания
+      panoramaId: panoramaId,
       title: panorama.title,
       image: panorama.image,
       hotspots: []
@@ -107,7 +161,6 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
       return {
         ...prev,
         scenes: newScenes,
-        // Если это первая сцена ИЛИ нет стартовой сцены - делаем её стартовой
         startingScene: prev.startingScene || newScene.id
       };
     });
@@ -343,6 +396,16 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
 
   const currentScene = currentTour.scenes.find(s => s.id === selectedScene);
 
+  // Очистка URL объектов при закрытии компонента
+  useEffect(() => {
+    return () => {
+      // Освобождаем все URL объекты при размонтировании
+      uploadedPanoramas.forEach(panorama => {
+        URL.revokeObjectURL(panorama.image);
+      });
+    };
+  }, [uploadedPanoramas]);
+
   return (
     <div className="fixed inset-0 z-50 bg-dark-100 flex">
       {/* Left Sidebar */}
@@ -419,37 +482,126 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
 
           <TabsContent value="panoramas" className="flex-1 overflow-hidden">
             <div className="p-4 space-y-3 h-full overflow-y-auto">
-              {samplePanoramas.map((panorama) => {
-                const isAdded = currentTour.scenes.some(scene => scene.panoramaId === panorama.id);
-                
-                return (
-                  <Card
-                    key={panorama.id}
-                    className={`glass-effect transition-all cursor-pointer ${
-                      isAdded 
-                        ? 'border-green-500/50 bg-green-500/10' 
-                        : 'border-white/20 hover:border-neon-cyan/50'
-                    }`}
-                    onClick={() => !isAdded && addScene(panorama.id)}
-                  >
-                    <img
-                      src={panorama.image}
-                      alt={panorama.title}
-                      className="w-full h-20 object-cover rounded-t-lg"
-                    />
-                    <CardContent className="p-3">
-                      <h4 className="text-white font-semibold text-sm">{panorama.title}</h4>
-                      <div className="flex items-center justify-center mt-2">
-                        {isAdded ? (
-                          <Icon name="Check" className="text-green-400" size={16} />
-                        ) : (
-                          <Icon name="Plus" className="text-neon-cyan" size={16} />
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {/* Кнопка загрузки */}
+              <div className="mb-4">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full bg-neon-magenta text-white hover:bg-neon-magenta/80 mb-2"
+                >
+                  <Icon name="Upload" size={16} className="mr-2" />
+                  Upload ({uploadedPanoramas.length}/10)
+                </Button>
+                <p className="text-gray-400 text-xs text-center">
+                  Поддерживаемые форматы: JPG, PNG, WebP
+                </p>
+              </div>
+
+              {/* Загруженные панорамы */}
+              {uploadedPanoramas.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-white font-semibold text-sm mb-2 flex items-center">
+                    <Icon name="Upload" size={14} className="mr-2" />
+                    Ваши панорамы
+                  </h4>
+                  <div className="space-y-2">
+                    {uploadedPanoramas.map((panorama) => {
+                      const isAdded = currentTour.scenes.some(scene => scene.panoramaId === panorama.id);
+                      
+                      return (
+                        <Card
+                          key={panorama.id}
+                          className={`glass-effect transition-all cursor-pointer ${
+                            isAdded 
+                              ? 'border-green-500/50 bg-green-500/10' 
+                              : 'border-white/20 hover:border-neon-cyan/50'
+                          }`}
+                          onClick={() => !isAdded && addScene(panorama.id)}
+                        >
+                          <div className="relative">
+                            <img
+                              src={panorama.image}
+                              alt={panorama.title}
+                              className="w-full h-20 object-cover rounded-t-lg"
+                            />
+                            {!isAdded && (
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeUploadedPanorama(panorama.id);
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="absolute top-2 right-2 w-6 h-6 p-0 bg-red-500/80 border-red-500 hover:bg-red-600 text-white"
+                              >
+                                <Icon name="X" size={12} />
+                              </Button>
+                            )}
+                          </div>
+                          <CardContent className="p-3">
+                            <h4 className="text-white font-semibold text-sm truncate">{panorama.title}</h4>
+                            <div className="flex items-center justify-center mt-2">
+                              {isAdded ? (
+                                <Icon name="Check" className="text-green-400" size={16} />
+                              ) : (
+                                <Icon name="Plus" className="text-neon-cyan" size={16} />
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Примеры панорам */}
+              <div>
+                <h4 className="text-white font-semibold text-sm mb-2 flex items-center">
+                  <Icon name="Image" size={14} className="mr-2" />
+                  Примеры
+                </h4>
+                <div className="space-y-2">
+                  {samplePanoramas.map((panorama) => {
+                    const isAdded = currentTour.scenes.some(scene => scene.panoramaId === panorama.id);
+                    
+                    return (
+                      <Card
+                        key={panorama.id}
+                        className={`glass-effect transition-all cursor-pointer ${
+                          isAdded 
+                            ? 'border-green-500/50 bg-green-500/10' 
+                            : 'border-white/20 hover:border-neon-cyan/50'
+                        }`}
+                        onClick={() => !isAdded && addScene(panorama.id)}
+                      >
+                        <img
+                          src={panorama.image}
+                          alt={panorama.title}
+                          className="w-full h-20 object-cover rounded-t-lg"
+                        />
+                        <CardContent className="p-3">
+                          <h4 className="text-white font-semibold text-sm">{panorama.title}</h4>
+                          <div className="flex items-center justify-center mt-2">
+                            {isAdded ? (
+                              <Icon name="Check" className="text-green-400" size={16} />
+                            ) : (
+                              <Icon name="Plus" className="text-neon-cyan" size={16} />
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
