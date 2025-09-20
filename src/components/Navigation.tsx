@@ -16,74 +16,86 @@ export default function Navigation({
   onViewChange,
   onAuthShow
 }: NavigationProps) {
+  const navItems = [
+    { id: 'home', label: 'Home' },
+    { id: 'catalog', label: 'Gallery' },
+    { id: 'pricing', label: 'Pricing' },
+  ];
+
+  if (isAuthenticated) {
+    navItems.push({ id: 'tour-builder', label: 'Create' });
+  }
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20">
-      <div className="container mx-auto px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Icon name="Globe" className="text-neon-cyan" size={32} />
-            <h1 className="text-2xl font-orbitron font-bold text-white neon-text">
-              PanoramaSite
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
+      <div className="section-container">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-slate-600 to-slate-800 rounded-lg flex items-center justify-center">
+              <Icon name="Globe" className="text-white" size={20} />
+            </div>
+            <h1 className="text-xl font-semibold text-slate-900">
+              Panorama 360 App
             </h1>
           </div>
           
+          {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
-            <button 
-              onClick={() => onViewChange('home')}
-              className={`transition-colors ${currentView === 'home' ? 'text-neon-cyan' : 'text-white hover:text-neon-cyan'}`}
-            >
-              Home
-            </button>
-            <button 
-              onClick={() => onViewChange('catalog')}
-              className={`transition-colors ${currentView === 'catalog' ? 'text-neon-cyan' : 'text-white hover:text-neon-cyan'}`}
-            >
-              Catalog
-            </button>
-            <button 
-              onClick={() => onViewChange('pricing')}
-              className={`transition-colors ${currentView === 'pricing' ? 'text-neon-cyan' : 'text-white hover:text-neon-cyan'}`}
-            >
-              Pricing
-            </button>
-            {isAuthenticated && (
+            {navItems.map((item) => (
               <button 
-                onClick={() => onViewChange('tour-builder')}
-                className={`transition-colors ${currentView === 'tour-builder' ? 'text-neon-cyan' : 'text-white hover:text-neon-cyan'}`}
+                key={item.id}
+                onClick={() => onViewChange(item.id)}
+                className={`text-sm font-medium transition-colors duration-200 ${
+                  currentView === item.id 
+                    ? 'text-slate-900' 
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
               >
-                Create Tour
+                {item.label}
               </button>
-            )}
+            ))}
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* Actions */}
+          <div className="flex items-center space-x-3">
             {isAuthenticated ? (
               <>
                 <Button 
                   variant="outline" 
-                  className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black"
+                  size="sm"
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
                   disabled={user?.subscription === 'free' && user?.uploads >= user?.maxUploads}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
-                  Upload {user?.subscription === 'free' && `(${user?.uploads}/${user?.maxUploads})`}
+                  Upload
+                  {user?.subscription === 'free' && (
+                    <span className="ml-1 text-xs text-slate-500">
+                      ({user?.uploads}/{user?.maxUploads})
+                    </span>
+                  )}
                 </Button>
+                
                 <Button 
                   onClick={() => onViewChange('profile')}
                   variant="outline"
-                  className="neon-border text-white border-white/30"
+                  size="sm"
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
                 >
                   <img 
                     src={user?.avatar} 
                     alt={user?.name} 
-                    className="w-6 h-6 rounded-full mr-2" 
+                    className="w-5 h-5 rounded-full mr-2" 
                   />
                   {user?.name}
                 </Button>
+                
                 {user?.role === 'admin' && (
                   <Button 
                     onClick={() => onViewChange('admin')}
                     variant="outline"
-                    className="neon-border text-neon-magenta border-neon-magenta"
+                    size="sm"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50"
                   >
                     <Icon name="Settings" size={16} className="mr-2" />
                     Admin
@@ -94,14 +106,16 @@ export default function Navigation({
               <>
                 <Button 
                   variant="outline" 
-                  className="neon-border text-neon-cyan border-neon-cyan hover:bg-neon-cyan hover:text-black"
+                  size="sm"
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
                   onClick={onAuthShow}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
                   Upload
                 </Button>
                 <Button 
-                  className="bg-gradient-to-r from-neon-cyan to-neon-blue text-black font-semibold"
+                  size="sm"
+                  className="button-primary"
                   onClick={onAuthShow}
                 >
                   Sign In

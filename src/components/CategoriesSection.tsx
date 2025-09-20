@@ -13,23 +13,22 @@ export default function CategoriesSection({
   onViewChange
 }: CategoriesSectionProps) {
   return (
-    <section className="py-20 bg-gradient-to-b from-dark-100 to-dark-200">
-      <div className="container mx-auto px-6">
+    <section className="py-20 bg-slate-50">
+      <div className="section-container">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-orbitron font-bold text-white mb-6">
-            Discover Categories
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+            Explore Categories
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Explore our curated collection of immersive 360° experiences
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+            Discover our curated collection of immersive 360° experiences across different themes
           </p>
         </div>
         
         <div className="grid md:grid-cols-3 gap-8">
-          {categories.map((category, index) => (
+          {categories.slice(0, 6).map((category, index) => (
             <Card 
               key={category.id} 
-              className="glass-effect border-white/20 hover:border-neon-cyan/50 transition-all duration-300 group cursor-pointer animate-float"
-              style={{ animationDelay: `${index * 0.2}s` }}
+              className="card-minimal hover:shadow-lg transition-all duration-300 group cursor-pointer border-slate-200"
               onClick={() => {
                 onCategorySelect(category.id);
                 onViewChange('catalog');
@@ -39,18 +38,18 @@ export default function CategoriesSection({
                 <img 
                   src={category.image} 
                   alt={category.title}
-                  className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <Badge className="absolute top-4 right-4 bg-neon-cyan text-black font-semibold">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <Badge className="absolute top-4 right-4 bg-white text-slate-900 font-medium">
                   {category.count} tours
                 </Badge>
               </div>
-              <CardHeader>
-                <CardTitle className="text-xl font-orbitron text-white group-hover:text-neon-cyan transition-colors">
+              <CardHeader className="p-6">
+                <CardTitle className="text-xl font-semibold text-slate-900 group-hover:text-primary transition-colors">
                   {category.title}
                 </CardTitle>
-                <p className="text-gray-400">{category.description}</p>
+                <p className="text-slate-600 text-sm leading-relaxed">{category.description}</p>
               </CardHeader>
             </Card>
           ))}

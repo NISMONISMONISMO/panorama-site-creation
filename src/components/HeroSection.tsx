@@ -24,63 +24,65 @@ export default function HeroSection({
   return (
     <section 
       ref={heroRef}
-      className="relative h-screen bg-cover bg-center bg-no-repeat transition-all duration-1000"
+      className="relative min-h-screen bg-cover bg-center bg-no-repeat"
       style={{ 
-        backgroundImage: `url(${categories[heroImageIndex].image})`,
-        backgroundAttachment: 'fixed'
+        backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%), url(/img/d56a683b-faf8-461a-82bb-562979018bd8.jpg)`
       }}
     >
-      <div className="absolute inset-0 bg-black/70" />
-      <div className="relative z-10 flex items-center justify-center h-full text-center">
-        <div className="max-w-4xl mx-auto px-6">
-          <h1 className="text-6xl md:text-8xl font-orbitron font-black text-white mb-6 animate-neon-pulse">
-            EXPLORE
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-neon-cyan to-neon-magenta">
-              360° WORLDS
-            </span>
-          </h1>
-          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Immerse yourself in breathtaking virtual reality experiences. 
-            Create, share, and explore panoramic worlds like never before.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-neon-cyan to-neon-blue text-black font-bold text-lg px-8 py-4 animate-glow"
-              onClick={() => onViewChange('catalog')}
-            >
-              <Icon name="Play" size={20} className="mr-2" />
-              Explore Now
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="neon-border text-neon-magenta border-neon-magenta hover:bg-neon-magenta hover:text-black text-lg px-8 py-4"
-              onClick={() => {
-                if (isAuthenticated) {
-                  onViewChange('tour-builder');
-                } else {
-                  onAuthShow();
-                }
-              }}
-            >
-              <Icon name="Zap" size={20} className="mr-2" />
-              Create Tour
-            </Button>
+      <div className="flex items-center justify-center min-h-screen pt-16">
+        <div className="section-container">
+          <div className="text-center text-white max-w-4xl mx-auto">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+              Immersive 360°
+              <span className="block text-4xl md:text-6xl font-normal mt-2 opacity-90">
+                Virtual Experiences
+              </span>
+            </h1>
+            
+            <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Create and explore breathtaking panoramic worlds. Professional tools for immersive storytelling and virtual tours.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button 
+                size="lg" 
+                className="bg-white text-slate-900 hover:bg-gray-100 font-semibold text-lg px-8 py-4 shadow-xl"
+                onClick={() => onViewChange('catalog')}
+              >
+                <Icon name="Play" size={20} className="mr-2" />
+                Explore Gallery
+              </Button>
+              
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm text-lg px-8 py-4"
+                onClick={() => {
+                  if (isAuthenticated) {
+                    onViewChange('tour-builder');
+                  } else {
+                    onAuthShow();
+                  }
+                }}
+              >
+                <Icon name="Upload" size={20} className="mr-2" />
+                Start Creating
+              </Button>
+            </div>
           </div>
         </div>
       </div>
       
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
         <div className="flex space-x-2">
-          {categories.map((_, index) => (
+          {categories.slice(0, 5).map((_, index) => (
             <button
               key={index}
               onClick={() => onSetHeroImageIndex(index)}
               className={`w-3 h-3 rounded-full transition-all ${
                 index === heroImageIndex 
-                  ? 'bg-neon-cyan shadow-lg shadow-neon-cyan/50' 
-                  : 'bg-white/30 hover:bg-white/50'
+                  ? 'bg-white shadow-lg' 
+                  : 'bg-white/40 hover:bg-white/60'
               }`}
             />
           ))}

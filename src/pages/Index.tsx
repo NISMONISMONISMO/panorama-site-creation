@@ -119,17 +119,17 @@ function Index() {
 
   if (isLoading) {
     return (
-      <div className="dark min-h-screen bg-dark-100 text-white font-sans flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground font-sans flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-neon-cyan mx-auto mb-4"></div>
-          <p className="text-xl font-orbitron">Загрузка...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-xl font-semibold">Загрузка...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="dark min-h-screen bg-dark-100 text-white font-sans">
+    <div className="min-h-screen bg-background text-foreground font-sans">
       <Navigation
         currentView={currentView}
         isAuthenticated={isAuthenticated}

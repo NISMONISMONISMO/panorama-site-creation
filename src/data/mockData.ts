@@ -21,8 +21,9 @@ export interface SubscriptionPlan {
   name: string;
   price: string;
   period: string;
+  description: string;
   features: string[];
-  limitations: string[];
+  limitations?: string[];
   buttonText: string;
   popular: boolean;
   color: string;
@@ -64,33 +65,61 @@ export const panoramas: PanoramaItem[] = [
 
 export const subscriptionPlans: SubscriptionPlan[] = [
   {
-    name: 'Free',
+    name: 'Starter',
     price: '$0',
     period: 'forever',
-    features: ['2 panoramas/day', '24h storage', 'Basic viewing', 'Community access'],
-    limitations: ['No virtual tours', 'No embedding', 'Limited storage'],
+    description: 'Perfect for trying out our platform',
+    features: [
+      'Up to 5 panoramas',
+      'Basic 360° viewing',
+      'Community gallery access',
+      'Standard image quality',
+      'Email support'
+    ],
+    limitations: [
+      'No virtual tours',
+      'No custom branding', 
+      'No analytics'
+    ],
     buttonText: 'Get Started',
     popular: false,
     color: 'from-gray-600 to-gray-800'
   },
   {
-    name: 'Premium',
-    price: '$19',
+    name: 'Professional',
+    price: '$29',
     period: 'month',
-    features: ['Unlimited uploads', 'Permanent storage', 'Virtual tour builder', 'Embedding widgets', 'Priority support'],
-    limitations: [],
-    buttonText: 'Upgrade Now',
+    description: 'For content creators and businesses',
+    features: [
+      'Unlimited panorama uploads',
+      'Virtual tour builder',
+      'Custom branding & logos',
+      'Advanced analytics',
+      'Embed anywhere',
+      'Priority email support',
+      'HD & 4K quality'
+    ],
+    buttonText: 'Start Free Trial',
     popular: true,
-    color: 'from-neon-cyan to-neon-blue'
+    color: 'from-blue-600 to-blue-800'
   },
   {
-    name: 'Business',
-    price: '$49',
+    name: 'Enterprise',
+    price: '$99',
     period: 'month',
-    features: ['Everything in Premium', 'Custom domains', 'Advanced analytics', 'SSO integration', 'API access', 'White-label options'],
-    limitations: [],
+    description: 'For large teams and organizations',
+    features: [
+      'Everything in Professional',
+      'Team collaboration tools',
+      'Custom domain hosting',
+      'API access & integrations',
+      'White-label solutions',
+      'Dedicated account manager',
+      '99.9% uptime SLA',
+      'Advanced security features'
+    ],
     buttonText: 'Contact Sales',
     popular: false,
-    color: 'from-neon-magenta to-purple-600'
+    color: 'from-purple-600 to-purple-800'
   }
 ];

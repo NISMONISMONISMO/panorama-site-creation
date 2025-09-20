@@ -62,17 +62,31 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				neon: {
-					cyan: '#00FFFF',
-					magenta: '#FF00FF',
-					blue: '#0080FF',
-					green: '#00FF80',
+				neutral: {
+					50: '#fafafa',
+					100: '#f5f5f5',
+					200: '#e5e5e5',
+					300: '#d4d4d4',
+					400: '#a3a3a3',
+					500: '#737373',
+					600: '#525252',
+					700: '#404040',
+					800: '#262626',
+					900: '#171717',
+					950: '#0a0a0a',
 				},
-				dark: {
-					100: '#000000',
-					200: '#1A1A1A',
-					300: '#2A2A2A',
-					400: '#3A3A3A',
+				slate: {
+					50: '#f8fafc',
+					100: '#f1f5f9',
+					200: '#e2e8f0',
+					300: '#cbd5e1',
+					400: '#94a3b8',
+					500: '#64748b',
+					600: '#475569',
+					700: '#334155',
+					800: '#1e293b',
+					900: '#0f172a',
+					950: '#020617',
 				}
 			},
 			borderRadius: {
@@ -85,8 +99,9 @@ export default {
 				'sans': ['Inter', 'system-ui', 'sans-serif'],
 			},
 			backgroundImage: {
-				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-				'neon-gradient': 'linear-gradient(45deg, #00FFFF, #FF00FF)',
+				'hero-gradient': 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 100%)',
+				'card-gradient': 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+				'section-gradient': 'linear-gradient(180deg, rgba(248,250,252,0) 0%, rgba(248,250,252,1) 100%)',
 			},
 			keyframes: {
 				'accordion-down': {
