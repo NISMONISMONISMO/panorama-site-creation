@@ -31,25 +31,25 @@ export interface SubscriptionPlan {
 
 export const categories: PanoramaCategory[] = [
   {
-    id: 'urban',
-    title: 'Urban Skylines',
-    image: '/img/b6175d7f-3820-410f-89f7-d4fe91bf69de.jpg',
-    description: 'Futuristic city landscapes',
-    count: 24
+    id: 'panoramas',
+    title: 'Панорамы',
+    image: '/img/0d73c593-b178-45de-a0a6-a09f6852469c.jpg',
+    description: 'Исследуйте коллекцию 360° панорам от профессиональных фотографов',
+    count: 150
   },
   {
-    id: 'mountain',
-    title: 'Mountain Vistas',
-    image: '/img/542cbe70-12c6-4b52-aad4-c60f92d854a0.jpg',
-    description: 'Epic mountain panoramas',
-    count: 18
+    id: 'tours',
+    title: 'Туры',
+    image: '/img/78ae2779-f449-4170-990b-258c94bfb2f5.jpg',
+    description: 'Интерактивные виртуальные туры с переходами между локациями',
+    count: 45
   },
   {
-    id: 'coastal',
-    title: 'Coastal Retreats',
-    image: '/img/a0134b33-244e-4ca5-8bd5-41b083ed220e.jpg',
-    description: 'Stunning ocean views',
-    count: 16
+    id: 'create',
+    title: 'Начать работу',
+    image: '/img/8bea7245-6694-4648-ab97-9e56dc74ed7c.jpg',
+    description: 'Создавайте собственные панорамы и виртуальные туры',
+    count: 0
   }
 ];
 

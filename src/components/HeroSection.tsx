@@ -24,9 +24,9 @@ export default function HeroSection({
   return (
     <section 
       ref={heroRef}
-      className="relative min-h-screen bg-cover bg-center bg-no-repeat"
+      className="relative min-h-screen bg-cover bg-center bg-no-repeat transition-all duration-1000"
       style={{ 
-        backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%), url(/img/d56a683b-faf8-461a-82bb-562979018bd8.jpg)`
+        backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%), url(${categories[heroImageIndex]?.image || '/img/d56a683b-faf8-461a-82bb-562979018bd8.jpg'})`
       }}
     >
       <div className="flex items-center justify-center min-h-screen pt-16">
@@ -56,7 +56,7 @@ export default function HeroSection({
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm text-lg px-8 py-4"
+                className="border-white text-white hover:bg-white hover:text-slate-900 backdrop-blur-sm text-lg px-8 py-4 font-medium transition-all"
                 onClick={() => {
                   if (isAuthenticated) {
                     onViewChange('tour-builder');
@@ -75,7 +75,7 @@ export default function HeroSection({
       
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
         <div className="flex space-x-2">
-          {categories.slice(0, 5).map((_, index) => (
+          {categories.slice(0, 3).map((_, index) => (
             <button
               key={index}
               onClick={() => onSetHeroImageIndex(index)}

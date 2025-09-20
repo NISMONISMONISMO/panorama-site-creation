@@ -27,15 +27,15 @@ export default function Navigation({
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md">
       <div className="section-container">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-slate-600 to-slate-800 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <Icon name="Globe" className="text-white" size={20} />
             </div>
-            <h1 className="text-xl font-semibold text-slate-900">
+            <h1 className="text-xl font-semibold text-white">
               Panorama 360 App
             </h1>
           </div>
@@ -48,8 +48,8 @@ export default function Navigation({
                 onClick={() => onViewChange(item.id)}
                 className={`text-sm font-medium transition-colors duration-200 ${
                   currentView === item.id 
-                    ? 'text-slate-900' 
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'text-white' 
+                    : 'text-white/80 hover:text-white'
                 }`}
               >
                 {item.label}
@@ -64,13 +64,13 @@ export default function Navigation({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                  className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                   disabled={user?.subscription === 'free' && user?.uploads >= user?.maxUploads}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
                   Upload
                   {user?.subscription === 'free' && (
-                    <span className="ml-1 text-xs text-slate-500">
+                    <span className="ml-1 text-xs text-white/70">
                       ({user?.uploads}/{user?.maxUploads})
                     </span>
                   )}
@@ -80,7 +80,7 @@ export default function Navigation({
                   onClick={() => onViewChange('profile')}
                   variant="outline"
                   size="sm"
-                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                  className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                 >
                   <img 
                     src={user?.avatar} 
@@ -95,7 +95,7 @@ export default function Navigation({
                     onClick={() => onViewChange('admin')}
                     variant="outline"
                     size="sm"
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                   >
                     <Icon name="Settings" size={16} className="mr-2" />
                     Admin
@@ -107,7 +107,7 @@ export default function Navigation({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                  className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                   onClick={onAuthShow}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
@@ -115,7 +115,7 @@ export default function Navigation({
                 </Button>
                 <Button 
                   size="sm"
-                  className="button-primary"
+                  className="bg-white text-slate-900 hover:bg-white/90 font-medium"
                   onClick={onAuthShow}
                 >
                   Sign In
