@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import PanoramaViewer from './PanoramaViewer';
+import PanoramaEditor2D from './panorama/PanoramaEditor2D';
 
 interface Hotspot {
   id: string;
@@ -60,6 +61,7 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
   const [previewMode, setPreviewMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
+  const [show2DEditor, setShow2DEditor] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const addScene = (panoramaId: string) => {
@@ -164,8 +166,15 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
 
   const openViewer = (editMode = false) => {
     if (!selectedScene) return;
-    setIsEditMode(editMode);
-    setShowViewer(true);
+    
+    if (editMode) {
+      // Для редактирования используем 2D редактор
+      setShow2DEditor(true);
+    } else {
+      // Для просмотра используем 3D вьювер
+      setIsEditMode(false);
+      setShowViewer(true);
+    }
   };
 
   const removeHotspot = (sceneId: string, hotspotId: string) => {
@@ -177,6 +186,30 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
           : scene
       )
     }));
+  };
+
+  // Функции для 2D редактора
+  const handle2DHotspotCreate = (hotspotData: Omit<Hotspot, 'id'>) => {
+    if (!selectedScene) return;
+
+    const newHotspot: Hotspot = {
+      id: `hotspot-${Date.now()}`,
+      ...hotspotData
+    };
+
+    setCurrentTour(prev => ({
+      ...prev,
+      scenes: prev.scenes.map(scene =>
+        scene.id === selectedScene
+          ? { ...scene, hotspots: [...scene.hotspots, newHotspot] }
+          : scene
+      )
+    }));
+  };
+
+  const handle2DHotspotDelete = (hotspotId: string) => {
+    if (!selectedScene) return;
+    removeHotspot(selectedScene, hotspotId);
   };
 
   const exportTour = () => {
@@ -484,6 +517,22 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
           onHotspotAdd={addHotspot}
           onHotspotDelete={deleteHotspot}
           onPanoramaChange={handlePanoramaChange}
+        />
+      )}
+
+      {/* 2D редактор hotspot'ов */}
+      {show2DEditor && selectedScene && (
+        <PanoramaEditor2D
+          imageUrl={currentTour.scenes.find(s => s.id === selectedScene)?.image || ''}
+          hotspots={currentTour.scenes.find(s => s.id === selectedScene)?.hotspots || []}
+          availablePanoramas={currentTour.scenes.map(scene => ({
+            id: scene.id,
+            title: scene.title,
+            image: scene.image
+          }))}
+          onHotspotCreate={handle2DHotspotCreate}
+          onHotspotDelete={handle2DHotspotDelete}
+          onClose={() => setShow2DEditor(false)}
         />
       )}
     </div>
