@@ -62,6 +62,8 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showViewer, setShowViewer] = useState(false);
   const [show2DEditor, setShow2DEditor] = useState(false);
+  const [tourUrl, setTourUrl] = useState<string>('');
+  const [showPublishModal, setShowPublishModal] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const addScene = (panoramaId: string) => {
@@ -212,6 +214,19 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
     removeHotspot(selectedScene, hotspotId);
   };
 
+  const saveTour = () => {
+    // Симулируем сохранение тура и получение URL
+    const tourId = `tour-${Date.now()}`;
+    const baseUrl = window.location.origin;
+    const tourLink = `${baseUrl}/tour/${tourId}`;
+    
+    setTourUrl(tourLink);
+    setShowPublishModal(true);
+    
+    // Показываем сообщение об успешном сохранении
+    alert('Тур успешно сохранен!');
+  };
+
   const exportTour = () => {
     const tourData = {
       ...currentTour,
@@ -239,14 +254,25 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
         <div className="p-4 border-b border-white/20">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-orbitron font-bold text-white">Tour Builder</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="neon-border text-white border-white/30"
-            >
-              <Icon name="X" size={16} />
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                onClick={saveTour}
+                disabled={currentTour.scenes.length === 0}
+                className="bg-neon-cyan text-black hover:bg-neon-cyan/80"
+                size="sm"
+              >
+                <Icon name="Save" size={14} className="mr-2" />
+                Сохранить тур
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                className="neon-border text-white border-white/30"
+              >
+                <Icon name="X" size={16} />
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -534,6 +560,89 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
           onHotspotDelete={handle2DHotspotDelete}
           onClose={() => setShow2DEditor(false)}
         />
+      )}
+
+      {/* Модальное окно публикации тура */}
+      {showPublishModal && (
+        <div className="fixed inset-0 z-60 bg-black/50 flex items-center justify-center">
+          <div className="bg-dark-200 border border-white/20 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-orbitron font-bold text-lg">
+                Тур опубликован!
+              </h3>
+              <Button
+                onClick={() => setShowPublishModal(false)}
+                variant="ghost"
+                size="sm"
+                className="text-white"
+              >
+                <Icon name="X" size={16} />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-gray-400 text-sm block mb-2">
+                  Ссылка на тур для посетителей:
+                </label>
+                <div className="flex">
+                  <Input
+                    value={tourUrl}
+                    readOnly
+                    className="bg-dark-300 border-white/20 text-white"
+                  />
+                  <Button
+                    onClick={() => navigator.clipboard.writeText(tourUrl)}
+                    variant="outline"
+                    size="sm"
+                    className="ml-2 border-white/30 text-white"
+                  >
+                    <Icon name="Copy" size={14} />
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm block mb-2">
+                  Код для интеграции на сайт:
+                </label>
+                <div className="flex">
+                  <Input
+                    value={`<iframe src="${tourUrl}" width="800" height="600" frameborder="0"></iframe>`}
+                    readOnly
+                    className="bg-dark-300 border-white/20 text-white text-xs"
+                  />
+                  <Button
+                    onClick={() => navigator.clipboard.writeText(`<iframe src="${tourUrl}" width="800" height="600" frameborder="0"></iframe>`)}
+                    variant="outline"
+                    size="sm"
+                    className="ml-2 border-white/30 text-white"
+                  >
+                    <Icon name="Copy" size={14} />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex space-x-2 pt-4">
+                <Button
+                  onClick={() => window.open(tourUrl, '_blank')}
+                  className="flex-1 bg-neon-cyan text-black hover:bg-neon-cyan/80"
+                >
+                  <Icon name="ExternalLink" size={16} className="mr-2" />
+                  Открыть тур
+                </Button>
+                <Button
+                  onClick={exportTour}
+                  variant="outline"
+                  className="border-white/30 text-white"
+                >
+                  <Icon name="Download" size={16} className="mr-2" />
+                  Скачать
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -144,12 +144,16 @@ export default function PanoramaScene({
 
   // Инициализация сцены только один раз
   useEffect(() => {
-    if (!mountRef.current) return;
+    if (!mountRef.current || sceneRef.current) return; // Проверяем что сцена еще не создана
 
     // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+      preserveDrawingBuffer: false, // Экономит память
+      powerPreference: "low-power" // Экономит ресурсы
+    });
     
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     renderer.setClearColor(0x000000);
@@ -388,6 +392,15 @@ export default function PanoramaScene({
       // Удаляем DOM элемент
       if (mountRef.current && renderer.domElement && mountRef.current.contains(renderer.domElement)) {
         mountRef.current.removeChild(renderer.domElement);
+      }
+      
+      // Принудительно очищаем WebGL контекст
+      const gl = renderer.getContext();
+      if (gl) {
+        const loseContext = gl.getExtension('WEBGL_lose_context');
+        if (loseContext) {
+          loseContext.loseContext();
+        }
       }
       
       // Очищаем рендерер
