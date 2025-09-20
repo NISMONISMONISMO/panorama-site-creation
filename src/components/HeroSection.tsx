@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface HeroSectionProps {
   categories: any[];
@@ -20,6 +21,7 @@ export default function HeroSection({
   onAuthShow
 }: HeroSectionProps) {
   const heroRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
 
   return (
     <section 
@@ -33,14 +35,14 @@ export default function HeroSection({
         <div className="section-container">
           <div className="text-center text-white max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-              Immersive 360°
+              {t('hero.title1')}
               <span className="block text-4xl md:text-6xl font-normal mt-2 opacity-90">
-                Virtual Experiences
+                {t('hero.title2')}
               </span>
             </h1>
             
             <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Create and explore breathtaking panoramic worlds. Professional tools for immersive storytelling and virtual tours.
+              {t('hero.subtitle')}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -50,7 +52,7 @@ export default function HeroSection({
                 onClick={() => onViewChange('catalog')}
               >
                 <Icon name="Play" size={20} className="mr-2" />
-                Explore Gallery
+                {t('hero.exploreGallery')}
               </Button>
               
               <Button 
@@ -66,7 +68,7 @@ export default function HeroSection({
                 }}
               >
                 <Icon name="Upload" size={20} className="mr-2" />
-                Start Creating
+                {t('hero.startCreating')}
               </Button>
             </div>
           </div>

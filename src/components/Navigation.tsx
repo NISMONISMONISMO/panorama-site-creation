@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface NavigationProps {
   currentView: string;
@@ -16,14 +18,16 @@ export default function Navigation({
   onViewChange,
   onAuthShow
 }: NavigationProps) {
+  const { t } = useLanguage();
+  
   const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'catalog', label: 'Gallery' },
-    { id: 'pricing', label: 'Pricing' },
+    { id: 'home', label: t('nav.home') },
+    { id: 'catalog', label: t('nav.gallery') },
+    { id: 'pricing', label: t('nav.pricing') },
   ];
 
   if (isAuthenticated) {
-    navItems.push({ id: 'tour-builder', label: 'Create' });
+    navItems.push({ id: 'tour-builder', label: t('nav.create') });
   }
 
   return (
@@ -59,6 +63,7 @@ export default function Navigation({
 
           {/* Actions */}
           <div className="flex items-center space-x-3">
+            <LanguageSwitcher />
             {isAuthenticated ? (
               <>
                 <Button 
@@ -68,7 +73,7 @@ export default function Navigation({
                   disabled={user?.subscription === 'free' && user?.uploads >= user?.maxUploads}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
-                  Upload
+                  {t('nav.upload')}
                   {user?.subscription === 'free' && (
                     <span className="ml-1 text-xs text-white/70">
                       ({user?.uploads}/{user?.maxUploads})
@@ -91,7 +96,7 @@ export default function Navigation({
                   ) : (
                     <Icon name="User" size={16} className="mr-2" />
                   )}
-                  {user?.name || user?.email || 'Profile'}
+                  {user?.name || user?.email || t('nav.profile')}
                 </Button>
                 
                 {user?.role === 'admin' && (
@@ -102,7 +107,7 @@ export default function Navigation({
                     className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                   >
                     <Icon name="Settings" size={16} className="mr-2" />
-                    Admin
+                    {t('nav.admin')}
                   </Button>
                 )}
               </>
@@ -115,14 +120,14 @@ export default function Navigation({
                   onClick={onAuthShow}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
-                  Upload
+                  {t('nav.upload')}
                 </Button>
                 <Button 
                   size="sm"
                   className="bg-slate-900 text-white hover:bg-slate-800 font-medium shadow-sm"
                   onClick={onAuthShow}
                 >
-                  Войти
+                  {t('nav.signIn')}
                 </Button>
               </>
             )}

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CatalogViewProps {
   searchQuery: string;
@@ -26,6 +27,8 @@ export default function CatalogView({
   onPanoramaClick,
   onBackToHome
 }: CatalogViewProps) {
+  const { t } = useLanguage();
+  
   return (
     <div className="pt-24 bg-slate-100 min-h-screen">
       <div className="section-container py-8">
@@ -37,13 +40,13 @@ export default function CatalogView({
               className="border-slate-300 text-slate-700 hover:bg-slate-50"
             >
               <Icon name="ArrowLeft" size={16} className="mr-2" />
-              Назад
+              {t('nav.back')}
             </Button>
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-slate-300 rounded-lg flex items-center justify-center">
                 <Icon name="Globe" className="text-slate-700" size={20} />
               </div>
-              <h1 className="text-3xl font-bold text-slate-900">Галерея панорам</h1>
+              <h1 className="text-3xl font-bold text-slate-900">{t('gallery.title')}</h1>
             </div>
           </div>
         </div>
@@ -51,7 +54,7 @@ export default function CatalogView({
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <Input
-                placeholder="Поиск панорам..."
+                placeholder={t('gallery.search')}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="border-slate-300 focus:border-slate-500 focus:ring-slate-500"
@@ -63,19 +66,19 @@ export default function CatalogView({
                   value="all" 
                   className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
                 >
-                  Все
+                  {t('gallery.all')}
                 </TabsTrigger>
                 <TabsTrigger 
                   value="panoramas" 
                   className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
                 >
-                  Панорамы
+                  {t('gallery.panoramas')}
                 </TabsTrigger>
                 <TabsTrigger 
                   value="tours" 
                   className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
                 >
-                  Туры
+                  {t('gallery.tours')}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -97,7 +100,7 @@ export default function CatalogView({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 {panorama.premium && (
-                  <Badge className="absolute top-4 right-4 bg-amber-500 text-white font-medium">Premium</Badge>
+                  <Badge className="absolute top-4 right-4 bg-amber-500 text-white font-medium">{t('categories.premium')}</Badge>
                 )}
                 {!isAuthenticated && panorama.premium && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -128,8 +131,8 @@ export default function CatalogView({
         {filteredPanoramas.length === 0 && (
           <div className="text-center py-12">
             <Icon name="Search" className="mx-auto text-slate-400 mb-4" size={48} />
-            <h3 className="text-xl font-semibold text-slate-600 mb-2">Ничего не найдено</h3>
-            <p className="text-slate-500">Попробуйте изменить поисковый запрос или фильтры</p>
+            <h3 className="text-xl font-semibold text-slate-600 mb-2">{t('gallery.noResults')}</h3>
+            <p className="text-slate-500">{t('gallery.noResultsDesc')}</p>
           </div>
         )}
       </div>
