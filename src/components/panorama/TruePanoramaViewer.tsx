@@ -26,7 +26,8 @@ export default function TruePanoramaViewer({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const sphereRef = useRef<THREE.Mesh | null>(null);
-  const hotspotMeshesRef = useRef<THREE.Mesh[]>([]);
+  const hotspotMeshesRef = useRef<THREE.Group[]>([]);
+  const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const [isLoading, setIsLoading] = useState(true);
   
   // Управление мышью
@@ -82,6 +83,39 @@ export default function TruePanoramaViewer({
       isMouseDownRef.current = true;
       mouseRef.current.x = event.clientX;
       mouseRef.current.y = event.clientY;
+    };
+    
+    const onMouseClick = (event: MouseEvent) => {
+      // Проверяем клик по хотспоту
+      if (!renderer || !camera || !sceneRef.current) return;
+      
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mouse = new THREE.Vector2();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      
+      raycasterRef.current.setFromCamera(mouse, camera);
+      
+      // Проверяем пересечения с хотспотами
+      const intersects = raycasterRef.current.intersectObjects(
+        hotspotMeshesRef.current.map(group => group.children).flat()
+      );
+      
+      if (intersects.length > 0) {
+        // Нашли пересечение с хотспотом
+        const clickedObject = intersects[0].object;
+        let hotspotGroup = clickedObject.parent;
+        
+        // Поднимаемся по иерархии до группы хотспота
+        while (hotspotGroup && !hotspotGroup.userData.hotspot) {
+          hotspotGroup = hotspotGroup.parent;
+        }
+        
+        if (hotspotGroup && hotspotGroup.userData.hotspot && onHotspotClick) {
+          console.log('Hotspot clicked:', hotspotGroup.userData.hotspot);
+          onHotspotClick({ hotspot: hotspotGroup.userData.hotspot });
+        }
+      }
     };
 
     const onMouseMove = (event: MouseEvent) => {
@@ -156,6 +190,7 @@ export default function TruePanoramaViewer({
 
     // Добавляем слушатели
     renderer.domElement.addEventListener('mousedown', onMouseDown);
+    renderer.domElement.addEventListener('click', onMouseClick);
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
     renderer.domElement.addEventListener('wheel', onWheel);
@@ -177,6 +212,25 @@ export default function TruePanoramaViewer({
     // Анимационный цикл
     const animate = () => {
       requestAnimationFrame(animate);
+      
+      // Анимация хотспотов
+      const time = Date.now() * 0.002;
+      hotspotMeshesRef.current.forEach((hotspotGroup) => {
+        if (hotspotGroup.userData.ringMesh) {
+          const ringMesh = hotspotGroup.userData.ringMesh;
+          // Пульсация опацити кольца
+          ringMesh.material.opacity = 0.3 + 0.3 * Math.sin(time * 3);
+          // Вращение кольца
+          ringMesh.rotation.z = time;
+        }
+        
+        if (hotspotGroup.userData.sphereMesh) {
+          const sphereMesh = hotspotGroup.userData.sphereMesh;
+          // Легкое покачивание основного круга
+          sphereMesh.scale.setScalar(1 + 0.1 * Math.sin(time * 2));
+        }
+      });
+      
       if (renderer && scene && camera) {
         renderer.render(scene, camera);
       }
@@ -189,6 +243,7 @@ export default function TruePanoramaViewer({
       
       if (renderer?.domElement) {
         renderer.domElement.removeEventListener('mousedown', onMouseDown);
+        renderer.domElement.removeEventListener('click', onMouseClick);
         renderer.domElement.removeEventListener('wheel', onWheel);
         renderer.domElement.removeEventListener('touchstart', onTouchStart);
         renderer.domElement.removeEventListener('touchmove', onTouchMove);
@@ -289,26 +344,62 @@ export default function TruePanoramaViewer({
     hotspotMeshesRef.current = [];
 
     // Добавляем новые hotspot'ы
-    hotspots.forEach(hotspot => {
-      const geometry = new THREE.SphereGeometry(8, 16, 16);
-      const material = new THREE.MeshBasicMaterial({ 
+    hotspots.forEach((hotspot, index) => {
+      // Создаем группу для хотспота (круг + кольцо)
+      const hotspotGroup = new THREE.Group();
+      
+      // Основной круг хотспота
+      const sphereGeometry = new THREE.SphereGeometry(12, 16, 16);
+      const sphereMaterial = new THREE.MeshBasicMaterial({ 
         color: 0x00ffff,
         transparent: true,
-        opacity: 0.8
+        opacity: 0.9
       });
-      const mesh = new THREE.Mesh(geometry, material);
+      const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+      
+      // Пульсирующее кольцо
+      const ringGeometry = new THREE.RingGeometry(15, 20, 32);
+      const ringMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.5,
+        side: THREE.DoubleSide
+      });
+      const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
       
       // Позиционируем на сфере
-      const radius = 490; // Чуть ближе к камере чем сама сфера
-      mesh.position.set(
+      const radius = 480; // Ближе к камере
+      const position = new THREE.Vector3(
         hotspot.x * radius,
         hotspot.y * radius,
         hotspot.z * radius
       );
       
-      mesh.userData = { hotspot };
-      sceneRef.current.add(mesh);
-      hotspotMeshesRef.current.push(mesh);
+      hotspotGroup.position.copy(position);
+      
+      // Поворачиваем кольцо к камере
+      hotspotGroup.lookAt(0, 0, 0);
+      
+      hotspotGroup.add(sphereMesh);
+      hotspotGroup.add(ringMesh);
+      
+      // Сохраняем данные о hotspot'е
+      hotspotGroup.userData = { 
+        hotspot, 
+        index,
+        sphereMesh,
+        ringMesh,
+        startTime: Date.now() 
+      };
+      
+      sceneRef.current.add(hotspotGroup);
+      hotspotMeshesRef.current.push(hotspotGroup);
+      
+      console.log(`Hotspot ${index} added:`, {
+        position,
+        hotspot: hotspot.title || `Hotspot ${index + 1}`,
+        target: hotspot.targetPanorama
+      });
     });
   }, [hotspots]);
 

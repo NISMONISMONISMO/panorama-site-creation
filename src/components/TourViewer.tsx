@@ -35,41 +35,61 @@ export default function TourViewer() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // В реальном приложении здесь был бы API вызов для загрузки тура
-    // Пока симулируем загрузку демо тура
     const loadTour = async () => {
       try {
-        // Симулируем загрузку
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!tourId) {
+          console.error('No tour ID provided');
+          setLoading(false);
+          return;
+        }
         
-        // Демо тур
-        const demoTour: Tour = {
-          id: tourId || 'demo',
-          title: 'Демо Тур',
-          description: 'Это демонстрационный 360° тур',
-          scenes: [
-            {
-              id: 'scene-1',
-              panoramaId: 'panorama-1',
-              title: 'Сцена 1',
-              image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2048&h=1024&fit=crop',
-              hotspots: []
-            },
-            {
-              id: 'scene-2',
-              panoramaId: 'panorama-2',
-              title: 'Сцена 2',
-              image: 'https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=2048&h=1024&fit=crop',
-              hotspots: []
-            }
-          ],
-          startingScene: 'scene-1'
-        };
+        console.log('Loading tour:', tourId);
         
-        setTour(demoTour);
-        setCurrentSceneId(demoTour.startingScene);
-        console.log('Tour set:', demoTour);
-        console.log('Starting scene ID set:', demoTour.startingScene);
+        // Пытаемся загрузить тур из localStorage
+        const tourData = localStorage.getItem(`tour_${tourId}`);
+        
+        if (tourData) {
+          const parsedTour: Tour = JSON.parse(tourData);
+          console.log('Loaded tour from localStorage:', parsedTour);
+          console.log('Starting scene should be:', parsedTour.startingScene);
+          console.log('All scenes:', parsedTour.scenes.map(s => ({ id: s.id, title: s.title })));
+          
+          setTour(parsedTour);
+          // Убеждаемся что стартовая сцена правильная
+          const startingSceneId = parsedTour.startingScene || parsedTour.scenes[0]?.id;
+          setCurrentSceneId(startingSceneId);
+          
+          console.log('Current scene set to:', startingSceneId);
+        } else {
+          console.warn('Tour not found in localStorage, loading demo tour');
+          
+          // Если тур не найден, показываем демо тур
+          const demoTour: Tour = {
+            id: tourId,
+            title: 'Демо Тур',
+            description: 'Этот тур не найден. Показываем демонстрационный тур.',
+            scenes: [
+              {
+                id: 'demo-scene-1',
+                panoramaId: 'demo-panorama-1',
+                title: 'Демо Сцена 1',
+                image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2048&h=1024&fit=crop',
+                hotspots: []
+              },
+              {
+                id: 'demo-scene-2',
+                panoramaId: 'demo-panorama-2',
+                title: 'Демо Сцена 2',
+                image: 'https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?w=2048&h=1024&fit=crop',
+                hotspots: []
+              }
+            ],
+            startingScene: 'demo-scene-1'
+          };
+          
+          setTour(demoTour);
+          setCurrentSceneId(demoTour.startingScene);
+        }
       } catch (error) {
         console.error('Ошибка загрузки тура:', error);
       } finally {

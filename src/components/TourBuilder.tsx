@@ -246,16 +246,48 @@ export default function TourBuilder({ onClose }: { onClose: () => void }) {
   };
 
   const saveTour = () => {
-    // Симулируем сохранение тура и получение URL
+    // Сохраняем тур в localStorage с правильным порядком сцен
     const tourId = `tour-${Date.now()}`;
-    const baseUrl = window.location.origin;
-    const tourLink = `${baseUrl}/tour/${tourId}`;
     
-    setTourUrl(tourLink);
-    setShowPublishModal(true);
+    // Убеждаемся что стартовая сцена - первая в списке
+    const finalTour = {
+      ...currentTour,
+      id: tourId,
+      startingScene: currentTour.scenes[0]?.id || '',
+      savedAt: new Date().toISOString()
+    };
     
-    // Показываем сообщение об успешном сохранении
-    alert('Тур успешно сохранен!');
+    console.log('Saving tour:', finalTour);
+    console.log('Starting scene:', finalTour.startingScene);
+    console.log('Scenes order:', finalTour.scenes.map(s => ({ id: s.id, title: s.title })));
+    
+    // Сохраняем в localStorage
+    try {
+      localStorage.setItem(`tour_${tourId}`, JSON.stringify(finalTour));
+      
+      // Сохраняем в список всех туров
+      const allTours = JSON.parse(localStorage.getItem('all_tours') || '[]');
+      allTours.push({
+        id: tourId,
+        title: finalTour.title,
+        description: finalTour.description,
+        scenes: finalTour.scenes.length,
+        savedAt: finalTour.savedAt
+      });
+      localStorage.setItem('all_tours', JSON.stringify(allTours));
+      
+      const baseUrl = window.location.origin;
+      const tourLink = `${baseUrl}/tour/${tourId}`;
+      
+      setTourUrl(tourLink);
+      setShowPublishModal(true);
+      
+      console.log('Tour saved successfully to localStorage');
+      alert('Тур успешно сохранен!');
+    } catch (error) {
+      console.error('Error saving tour:', error);
+      alert('Ошибка сохранения тура');
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
