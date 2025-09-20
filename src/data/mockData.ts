@@ -40,7 +40,7 @@ export const categories: PanoramaCategory[] = [
   {
     id: 'tours',
     title: 'Туры',
-    image: '/img/78ae2779-f449-4170-990b-258c94bfb2f5.jpg',
+    image: '/img/235da2ea-2df7-4e21-a478-a732a35b8505.jpg',
     description: 'Интерактивные виртуальные туры с переходами между локациями',
     count: 45
   },

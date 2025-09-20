@@ -58,7 +58,7 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
         result = await apiService.register(formData.email, formData.password, formData.name);
         toast({
           title: 'Регистрация успешна!',
-          description: 'Добро пожаловать в PanoramaSite',
+          description: 'Добро пожаловать в Panorama 360 App',
         });
       } else {
         result = await apiService.login(formData.email, formData.password);
@@ -123,72 +123,80 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="w-full max-w-md glass-effect border-white/20">
-        <CardHeader className="text-center">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white border border-slate-200 shadow-xl">
+        <CardHeader className="text-center border-b border-slate-100">
           <div className="flex items-center justify-center mb-4">
-            <Icon name="Globe" className="text-neon-cyan mr-2" size={32} />
-            <h1 className="text-2xl font-orbitron font-bold text-white">PanoramaSite</h1>
+            <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-800 rounded-lg flex items-center justify-center mr-3">
+              <Icon name="Globe" className="text-white" size={24} />
+            </div>
+            <h1 className="text-2xl font-semibold text-slate-900">Panorama 360 App</h1>
           </div>
-          <CardTitle className="text-white">
-            {activeTab === 'signin' ? 'Welcome Back' : 'Join the Experience'}
+          <CardTitle className="text-slate-900 text-lg">
+            {activeTab === 'signin' ? 'Добро пожаловать' : 'Создать аккаунт'}
           </CardTitle>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="pt-6">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'signin' | 'signup')}>
-            <TabsList className="grid w-full grid-cols-2 bg-dark-300 border-white/20 mb-6">
-              <TabsTrigger value="signin" className="data-[state=active]:bg-neon-cyan data-[state=active]:text-black">
-                Sign In
+            <TabsList className="grid w-full grid-cols-2 bg-slate-100 mb-6">
+              <TabsTrigger 
+                value="signin" 
+                className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm border border-transparent data-[state=active]:border-slate-200"
+              >
+                Вход
               </TabsTrigger>
-              <TabsTrigger value="signup" className="data-[state=active]:bg-neon-cyan data-[state=active]:text-black">
-                Sign Up
+              <TabsTrigger 
+                value="signup" 
+                className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm border border-transparent data-[state=active]:border-slate-200"
+              >
+                Регистрация
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin" className="space-y-4">
               {error && (
-                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-md">
-                  <p className="text-red-200 text-sm">{error}</p>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white">Email</Label>
+                  <Label htmlFor="email" className="text-slate-700 font-medium">Email</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Введите ваш email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="bg-dark-300 border-white/20 text-white"
+                    className="border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-white">Password</Label>
+                  <Label htmlFor="password" className="text-slate-700 font-medium">Пароль</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder="Введите ваш пароль"
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="bg-dark-300 border-white/20 text-white"
+                    className="border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                     required
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-neon-cyan to-neon-blue text-black font-semibold"
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium"
                 >
                   {isLoading ? (
                     <>
                       <Icon name="Loader2" className="animate-spin mr-2" size={16} />
-                      Signing In...
+                      Вход...
                     </>
                   ) : (
-                    'Sign In'
+                    'Войти'
                   )}
                 </Button>
               </form>
@@ -196,70 +204,70 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
 
             <TabsContent value="signup" className="space-y-4">
               {error && (
-                <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-md">
-                  <p className="text-red-200 text-sm">{error}</p>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-white">Full Name</Label>
+                  <Label htmlFor="name" className="text-slate-700 font-medium">Имя</Label>
                   <Input
                     id="name"
-                    placeholder="Enter your name"
+                    placeholder="Введите ваше имя"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="bg-dark-300 border-white/20 text-white"
+                    className="border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-white">Email</Label>
+                  <Label htmlFor="signup-email" className="text-slate-700 font-medium">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Введите ваш email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="bg-dark-300 border-white/20 text-white"
+                    className="border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-white">Password</Label>
+                  <Label htmlFor="signup-password" className="text-slate-700 font-medium">Пароль</Label>
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="Create a password"
+                    placeholder="Создайте пароль"
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="bg-dark-300 border-white/20 text-white"
+                    className="border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password" className="text-white">Confirm Password</Label>
+                  <Label htmlFor="confirm-password" className="text-slate-700 font-medium">Подтвердите пароль</Label>
                   <Input
                     id="confirm-password"
                     type="password"
-                    placeholder="Confirm your password"
+                    placeholder="Подтвердите ваш пароль"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="bg-dark-300 border-white/20 text-white"
+                    className="border-slate-300 focus:border-slate-500 focus:ring-slate-500"
                     required
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-neon-cyan to-neon-blue text-black font-semibold"
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium"
                 >
                   {isLoading ? (
                     <>
                       <Icon name="Loader2" className="animate-spin mr-2" size={16} />
-                      Creating Account...
+                      Создание аккаунта...
                     </>
                   ) : (
-                    'Create Account'
+                    'Создать аккаунт'
                   )}
                 </Button>
               </form>
@@ -269,10 +277,10 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/20"></div>
+                <div className="w-full border-t border-slate-200"></div>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-dark-200 px-2 text-gray-400">Or continue with</span>
+                <span className="bg-white px-2 text-slate-500">Или войти через</span>
               </div>
             </div>
 
@@ -282,7 +290,7 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
                   variant="outline"
                   onClick={() => handleSocialAuth('Google')}
                   disabled={isLoading}
-                  className="neon-border border-white/30 text-white hover:bg-white/10"
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
                 >
                   <Icon name="Chrome" size={16} className="mr-2" />
                   Google
@@ -291,17 +299,17 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
                   variant="outline"
                   onClick={() => handleSocialAuth('Yandex')}
                   disabled={isLoading}
-                  className="neon-border border-white/30 text-white hover:bg-white/10"
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50"
                 >
                   <span className="mr-2 text-red-500 font-bold">Я</span>
-                  Яндекс ID
+                  Яндекс
                 </Button>
               </div>
               <Button
                 variant="outline"
                 onClick={() => handleSocialAuth('VK')}
                 disabled={isLoading}
-                className="w-full neon-border border-white/30 text-white hover:bg-white/10"
+                className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
               >
                 <span className="mr-2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold">VK</span>
                 ВКонтакте
@@ -313,9 +321,9 @@ export default function AuthModal({ isOpen, onClose, onAuth }: AuthModalProps) {
             <Button
               variant="ghost"
               onClick={onClose}
-              className="text-gray-400 hover:text-white"
+              className="text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             >
-              Continue as Guest
+              Продолжить как гость
             </Button>
           </div>
         </CardContent>

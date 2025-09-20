@@ -64,7 +64,7 @@ export default function Navigation({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
+                  className="border-white/80 text-white hover:bg-white hover:text-slate-900 backdrop-blur-sm font-medium"
                   disabled={user?.subscription === 'free' && user?.uploads >= user?.maxUploads}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
@@ -107,7 +107,7 @@ export default function Navigation({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
+                  className="border-white/80 text-white hover:bg-white hover:text-slate-900 backdrop-blur-sm font-medium"
                   onClick={onAuthShow}
                 >
                   <Icon name="Upload" size={16} className="mr-2" />
@@ -115,7 +115,7 @@ export default function Navigation({
                 </Button>
                 <Button 
                   size="sm"
-                  className="bg-white text-slate-900 hover:bg-white/90 font-medium"
+                  className="bg-white text-slate-900 hover:bg-white/90 font-medium shadow-sm"
                   onClick={onAuthShow}
                 >
                   Sign In

@@ -74,19 +74,19 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   );
 
   return (
-    <div className="pt-24 bg-dark-100 min-h-screen">
-      <div className="container mx-auto px-6 py-8">
+    <div className="pt-24 bg-slate-100 min-h-screen">
+      <div className="section-container py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Button
               variant="outline"
               onClick={onClose}
-              className="neon-border text-white border-white/30"
+              className="border-slate-300 text-slate-700 hover:bg-slate-50"
             >
               <Icon name="ArrowLeft" size={16} className="mr-2" />
-              Back
+              Назад
             </Button>
-            <h1 className="text-3xl font-orbitron font-bold text-white">Admin Panel</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Панель администратора</h1>
           </div>
           <div className="flex items-center space-x-2">
             <Badge className="bg-red-500 text-white animate-pulse">

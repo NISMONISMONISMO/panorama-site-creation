@@ -20,23 +20,23 @@ export default function UserProfile({ user, onClose, onLogout, onUpgrade }: User
   const [profileData, setProfileData] = useState({
     name: user.name,
     email: user.email,
-    bio: 'VR enthusiast and panorama creator'
+    bio: 'Энтузиаст VR и создатель панорам'
   });
 
   const userPanoramas = [
-    { id: '1', title: 'My First 360° Photo', views: 156, likes: 23, status: 'active', expiresIn: user.subscription === 'free' ? '18 hours' : null },
-    { id: '2', title: 'Sunset City View', views: 89, likes: 12, status: 'active', expiresIn: user.subscription === 'free' ? '6 hours' : null },
+    { id: '1', title: 'Моя первая 360° фотография', views: 156, likes: 23, status: 'active', expiresIn: user.subscription === 'free' ? '18 часов' : null },
+    { id: '2', title: 'Вид на город на закате', views: 89, likes: 12, status: 'active', expiresIn: user.subscription === 'free' ? '6 часов' : null },
   ];
 
   const userTours = [
-    { id: '1', title: 'Virtual Office Tour', scenes: 4, views: 234, status: 'published' },
-    { id: '2', title: 'Home Showcase', scenes: 6, views: 156, status: 'draft' }
+    { id: '1', title: 'Виртуальный тур по офису', scenes: 4, views: 234, status: 'published' },
+    { id: '2', title: 'Показ дома', scenes: 6, views: 156, status: 'draft' }
   ];
 
   const subscriptionLimits = {
-    free: { uploads: 2, storage: '24h', tours: 0, embedding: false },
-    premium: { uploads: 'Unlimited', storage: 'Permanent', tours: 'Unlimited', embedding: true },
-    business: { uploads: 'Unlimited', storage: 'Permanent', tours: 'Unlimited', embedding: true }
+    free: { uploads: 2, storage: '24ч', tours: 0, embedding: false },
+    premium: { uploads: 'Безлимит', storage: 'Постоянно', tours: 'Безлимит', embedding: true },
+    business: { uploads: 'Безлимит', storage: 'Постоянно', tours: 'Безлимит', embedding: true }
   };
 
   const currentLimits = subscriptionLimits[user.subscription as keyof typeof subscriptionLimits];
@@ -47,49 +47,49 @@ export default function UserProfile({ user, onClose, onLogout, onUpgrade }: User
   };
 
   return (
-    <div className="pt-24 bg-dark-100 min-h-screen">
-      <div className="container mx-auto px-6 py-8">
+    <div className="pt-24 bg-slate-100 min-h-screen">
+      <div className="section-container py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Button
               variant="outline"
               onClick={onClose}
-              className="neon-border text-white border-white/30"
+              className="border-slate-300 text-slate-700 hover:bg-slate-50"
             >
               <Icon name="ArrowLeft" size={16} className="mr-2" />
-              Back
+              Назад
             </Button>
-            <h1 className="text-3xl font-orbitron font-bold text-white">Profile</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Профиль</h1>
           </div>
           <Button
             variant="outline"
             onClick={onLogout}
-            className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
+            className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
           >
             <Icon name="LogOut" size={16} className="mr-2" />
-            Logout
+            Выйти
           </Button>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Profile Info */}
           <div className="lg:col-span-1">
-            <Card className="glass-effect border-white/20 mb-6">
+            <Card className="card-minimal border-slate-200 mb-6">
               <CardHeader className="text-center">
-                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-neon-cyan to-neon-magenta p-1">
+                <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-r from-slate-400 to-slate-600 p-1">
                   <img
                     src={user.avatar}
                     alt={user.name}
-                    className="w-full h-full rounded-full object-cover bg-dark-300"
+                    className="w-full h-full rounded-full object-cover bg-slate-200"
                   />
                 </div>
-                <CardTitle className="text-white">{user.name}</CardTitle>
-                <p className="text-gray-400">{user.email}</p>
+                <CardTitle className="text-slate-900">{user.name}</CardTitle>
+                <p className="text-slate-600">{user.email}</p>
                 <Badge className={`${
-                  user.subscription === 'free' ? 'bg-gray-600' :
-                  user.subscription === 'premium' ? 'bg-neon-cyan text-black' :
-                  'bg-neon-magenta text-white'
-                }`}>
+                  user.subscription === 'free' ? 'bg-slate-500' :
+                  user.subscription === 'premium' ? 'bg-blue-500' :
+                  'bg-purple-500'
+                } text-white`}>
                   {user.subscription.toUpperCase()}
                 </Badge>
               </CardHeader>
@@ -97,256 +97,238 @@ export default function UserProfile({ user, onClose, onLogout, onUpgrade }: User
                 {isEditing ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-white">Name</Label>
+                      <Label htmlFor="name" className="text-slate-700">Имя</Label>
                       <Input
+                        id="name"
                         value={profileData.name}
                         onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                        className="bg-dark-300 border-white/20 text-white"
+                        className="border-slate-300 focus:border-slate-500"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-white">Email</Label>
+                      <Label htmlFor="bio" className="text-slate-700">О себе</Label>
                       <Input
-                        value={profileData.email}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                        className="bg-dark-300 border-white/20 text-white"
+                        id="bio"
+                        value={profileData.bio}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, bio: e.target.value }))}
+                        className="border-slate-300 focus:border-slate-500"
                       />
                     </div>
                     <div className="flex space-x-2">
                       <Button
                         onClick={handleSaveProfile}
-                        className="flex-1 bg-neon-cyan text-black"
+                        className="bg-slate-900 hover:bg-slate-800 text-white flex-1"
                       >
-                        Save
+                        Сохранить
                       </Button>
                       <Button
                         variant="outline"
                         onClick={() => setIsEditing(false)}
-                        className="flex-1 border-white/30 text-white"
+                        className="border-slate-300 text-slate-700"
                       >
-                        Cancel
+                        Отмена
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    variant="outline"
-                    className="w-full neon-border text-neon-cyan border-neon-cyan"
-                  >
-                    <Icon name="Edit" size={16} className="mr-2" />
-                    Edit Profile
-                  </Button>
+                  <div className="space-y-4">
+                    <p className="text-slate-600 text-sm">{profileData.bio}</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsEditing(true)}
+                      className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
+                    >
+                      <Icon name="Edit" size={16} className="mr-2" />
+                      Редактировать профиль
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Subscription Status */}
-            <Card className="glass-effect border-white/20">
+            {/* Subscription Info */}
+            <Card className="card-minimal border-slate-200">
               <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <Icon name="Crown" className="text-neon-cyan mr-2" size={20} />
-                  Subscription
-                </CardTitle>
+                <CardTitle className="text-slate-900">Подписка</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {user.subscription === 'free' && (
-                  <>
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-400">Daily Uploads</span>
-                        <span className="text-white">{user.uploads}/{user.maxUploads}</span>
-                      </div>
-                      <Progress value={uploadProgress} className="h-2" />
-                    </div>
-                    <div className="text-xs text-gray-400 space-y-1">
-                      <p>• {currentLimits.storage} storage per panorama</p>
-                      <p>• No virtual tour builder</p>
-                      <p>• No embedding capabilities</p>
-                    </div>
-                    <Button
-                      onClick={onUpgrade}
-                      className="w-full bg-gradient-to-r from-neon-cyan to-neon-blue text-black font-semibold"
-                    >
-                      <Icon name="Zap" size={16} className="mr-2" />
-                      Upgrade to Premium
-                    </Button>
-                  </>
-                )}
-
-                {user.subscription !== 'free' && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Uploads</span>
-                      <span className="text-neon-cyan">{currentLimits.uploads}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Storage</span>
-                      <span className="text-neon-cyan">{currentLimits.storage}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Virtual Tours</span>
-                      <span className="text-neon-cyan">{currentLimits.tours}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Embedding</span>
-                      <Icon name="Check" className="text-neon-green" size={16} />
-                    </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Загрузки</span>
+                    <span className="text-slate-900 font-medium">
+                      {user.subscription === 'free' ? `${user.uploads}/${user.maxUploads}` : currentLimits.uploads}
+                    </span>
                   </div>
+                  {user.subscription === 'free' && (
+                    <Progress value={uploadProgress} className="h-2" />
+                  )}
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Хранение</span>
+                    <span className="text-slate-900">{currentLimits.storage}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Туры</span>
+                    <span className="text-slate-900">{currentLimits.tours}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Встраивание</span>
+                    <span className="text-slate-900">{currentLimits.embedding ? 'Да' : 'Нет'}</span>
+                  </div>
+                </div>
+
+                {user.subscription === 'free' && (
+                  <Button
+                    onClick={onUpgrade}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Icon name="Zap" size={16} className="mr-2" />
+                    Улучшить план
+                  </Button>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Content Tabs */}
+          {/* Content */}
           <div className="lg:col-span-2">
-            <Tabs defaultValue="panoramas">
-              <TabsList className="mb-6 bg-dark-300 border-white/20">
-                <TabsTrigger value="panoramas" className="data-[state=active]:bg-neon-cyan data-[state=active]:text-black">
-                  Panoramas ({userPanoramas.length})
+            <Tabs defaultValue="panoramas" className="space-y-6">
+              <TabsList className="bg-slate-200">
+                <TabsTrigger 
+                  value="panoramas" 
+                  className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
+                >
+                  Панорамы ({userPanoramas.length})
                 </TabsTrigger>
-                <TabsTrigger value="tours" className="data-[state=active]:bg-neon-cyan data-[state=active]:text-black">
-                  Virtual Tours ({userTours.length})
+                <TabsTrigger 
+                  value="tours" 
+                  className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
+                >
+                  Туры ({userTours.length})
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="data-[state=active]:bg-neon-cyan data-[state=active]:text-black">
-                  Settings
+                <TabsTrigger 
+                  value="analytics" 
+                  className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
+                >
+                  Аналитика
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="panoramas" className="space-y-4">
                 {userPanoramas.map((panorama) => (
-                  <Card key={panorama.id} className="glass-effect border-white/20">
-                    <CardContent className="p-6">
+                  <Card key={panorama.id} className="card-minimal border-slate-200">
+                    <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-white font-semibold mb-2">{panorama.title}</h3>
-                          <div className="flex items-center space-x-4 text-sm text-gray-400">
+                        <div>
+                          <h3 className="font-semibold text-slate-900">{panorama.title}</h3>
+                          <div className="flex items-center space-x-4 text-sm text-slate-600 mt-1">
                             <span className="flex items-center">
                               <Icon name="Eye" size={14} className="mr-1" />
-                              {panorama.views} views
+                              {panorama.views} просмотров
                             </span>
                             <span className="flex items-center">
                               <Icon name="Heart" size={14} className="mr-1" />
-                              {panorama.likes} likes
+                              {panorama.likes} лайков
                             </span>
                             {panorama.expiresIn && (
-                              <span className="flex items-center text-yellow-400">
+                              <span className="text-amber-600 flex items-center">
                                 <Icon name="Clock" size={14} className="mr-1" />
-                                Expires in {panorama.expiresIn}
+                                Истекает через {panorama.expiresIn}
                               </span>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={panorama.status === 'active' ? 'bg-neon-green text-black' : 'bg-gray-600'}>
-                            {panorama.status}
-                          </Badge>
-                          <Button variant="outline" size="sm" className="border-white/30 text-white">
-                            <Icon name="MoreVertical" size={14} />
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm" className="border-slate-300 text-slate-700">
+                            <Icon name="Edit" size={14} className="mr-1" />
+                            Изменить
+                          </Button>
+                          <Button variant="outline" size="sm" className="border-slate-300 text-slate-700">
+                            <Icon name="Share2" size={14} className="mr-1" />
+                            Поделиться
                           </Button>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
-
-                {user.subscription !== 'free' && (
-                  <Card className="glass-effect border-white/20 border-dashed">
-                    <CardContent className="p-6 text-center">
-                      <Icon name="Plus" className="text-neon-cyan mx-auto mb-4" size={48} />
-                      <h3 className="text-white font-semibold mb-2">Upload New Panorama</h3>
-                      <p className="text-gray-400 mb-4">Share your 360° experiences with the world</p>
-                      <Button className="bg-neon-cyan text-black">
-                        <Icon name="Upload" size={16} className="mr-2" />
-                        Upload Panorama
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
               </TabsContent>
 
               <TabsContent value="tours" className="space-y-4">
                 {userTours.map((tour) => (
-                  <Card key={tour.id} className="glass-effect border-white/20">
-                    <CardContent className="p-6">
+                  <Card key={tour.id} className="card-minimal border-slate-200">
+                    <CardContent className="p-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-white font-semibold mb-2">{tour.title}</h3>
-                          <div className="flex items-center space-x-4 text-sm text-gray-400">
-                            <span className="flex items-center">
-                              <Icon name="MapPin" size={14} className="mr-1" />
-                              {tour.scenes} scenes
-                            </span>
-                            <span className="flex items-center">
-                              <Icon name="Eye" size={14} className="mr-1" />
-                              {tour.views} views
-                            </span>
+                        <div>
+                          <h3 className="font-semibold text-slate-900">{tour.title}</h3>
+                          <div className="flex items-center space-x-4 text-sm text-slate-600 mt-1">
+                            <span>{tour.scenes} сцен</span>
+                            <span>{tour.views} просмотров</span>
+                            <Badge variant={tour.status === 'published' ? 'default' : 'secondary'}>
+                              {tour.status === 'published' ? 'Опубликован' : 'Черновик'}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={tour.status === 'published' ? 'bg-neon-green text-black' : 'bg-yellow-600'}>
-                            {tour.status}
-                          </Badge>
-                          <Button variant="outline" size="sm" className="border-white/30 text-white">
-                            <Icon name="Edit" size={14} />
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm" className="border-slate-300 text-slate-700">
+                            <Icon name="Edit" size={14} className="mr-1" />
+                            Редактировать
+                          </Button>
+                          <Button variant="outline" size="sm" className="border-slate-300 text-slate-700">
+                            <Icon name="Eye" size={14} className="mr-1" />
+                            Просмотр
                           </Button>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
-
-                {user.subscription === 'free' ? (
-                  <Card className="glass-effect border-white/20 border-dashed">
-                    <CardContent className="p-6 text-center">
-                      <Icon name="Lock" className="text-gray-400 mx-auto mb-4" size={48} />
-                      <h3 className="text-white font-semibold mb-2">Virtual Tours Locked</h3>
-                      <p className="text-gray-400 mb-4">Upgrade to Premium to create virtual tours</p>
-                      <Button onClick={onUpgrade} className="bg-neon-cyan text-black">
-                        <Icon name="Crown" size={16} className="mr-2" />
-                        Upgrade Now
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="glass-effect border-white/20 border-dashed">
-                    <CardContent className="p-6 text-center">
-                      <Icon name="Route" className="text-neon-cyan mx-auto mb-4" size={48} />
-                      <h3 className="text-white font-semibold mb-2">Create Virtual Tour</h3>
-                      <p className="text-gray-400 mb-4">Build immersive experiences with hotspots</p>
-                      <Button className="bg-neon-cyan text-black">
-                        <Icon name="Plus" size={16} className="mr-2" />
-                        New Tour
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
               </TabsContent>
 
-              <TabsContent value="settings" className="space-y-4">
-                <Card className="glass-effect border-white/20">
-                  <CardHeader>
-                    <CardTitle className="text-white">Account Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <Button variant="outline" className="w-full justify-start border-white/30 text-white">
-                      <Icon name="Key" size={16} className="mr-2" />
-                      Change Password
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start border-white/30 text-white">
-                      <Icon name="Bell" size={16} className="mr-2" />
-                      Notification Preferences
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start border-white/30 text-white">
-                      <Icon name="Shield" size={16} className="mr-2" />
-                      Privacy Settings
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start border-red-400 text-red-400 hover:bg-red-400 hover:text-white">
-                      <Icon name="Trash2" size={16} className="mr-2" />
-                      Delete Account
-                    </Button>
-                  </CardContent>
-                </Card>
+              <TabsContent value="analytics" className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="card-minimal border-slate-200">
+                    <CardHeader>
+                      <CardTitle className="text-slate-900 text-lg">Общая статистика</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Всего просмотров</span>
+                        <span className="font-semibold text-slate-900">1,234</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Всего лайков</span>
+                        <span className="font-semibold text-slate-900">156</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Рейтинг</span>
+                        <span className="font-semibold text-slate-900">4.8/5</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="card-minimal border-slate-200">
+                    <CardHeader>
+                      <CardTitle className="text-slate-900 text-lg">Активность</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Загружено панорам</span>
+                        <span className="font-semibold text-slate-900">{userPanoramas.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Создано туров</span>
+                        <span className="font-semibold text-slate-900">{userTours.length}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Дата регистрации</span>
+                        <span className="font-semibold text-slate-900">15 янв 2024</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             </Tabs>
           </div>

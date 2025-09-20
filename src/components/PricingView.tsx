@@ -9,7 +9,7 @@ interface PricingViewProps {
 
 export default function PricingView({ subscriptionPlans }: PricingViewProps) {
   return (
-    <div className="pt-24 bg-slate-50 min-h-screen">
+    <div className="pt-24 bg-slate-100 min-h-screen">
       <div className="section-container py-16">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
